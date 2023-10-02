@@ -1,0 +1,93 @@
+# 2022-12-03
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.10.0"}
+])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 3: Rucksack Reorganization
+
+  ## Examples
+
+      iex> input = \"""
+      ...> vJrwpWtwJgWrhcsFMMfFFhFp
+      ...> jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+      ...> PmmdzqPrVvPwwTWBwg
+      ...> wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+      ...> ttgJtRGJQctTZtZT
+      ...> CrZsJsPPZsGzwwsLwLmpwMDw
+      ...> \"""
+      ...> Advent.calculate_misplaced_item_priorities(input)
+      157
+      ...> Advent.calculate_common_item_trio_priorities(input)
+      70
+  """
+
+  def calculate_misplaced_item_priorities(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.to_charlist/1)
+    |> Enum.map(&split_compartments/1)
+    |> Enum.flat_map(&find_common_items/1)
+    |> Enum.map(&to_priority/1)
+    |> Enum.sum()
+  end
+
+  def calculate_common_item_trio_priorities(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.to_charlist/1)
+    |> Enum.chunk_every(3)
+    |> Enum.map(&List.to_tuple/1)
+    |> Enum.flat_map(&find_common_items/1)
+    |> Enum.map(&to_priority/1)
+    |> Enum.sum()
+  end
+
+  defp split_compartments(line) do
+    line
+    |> Enum.split(div(length(line), 2))
+  end
+
+  defp find_common_items({first, second}) do
+    MapSet.new(first)
+    |> MapSet.intersection(MapSet.new(second))
+  end
+
+  defp find_common_items({first, second, third}) do
+    MapSet.new(first)
+    |> MapSet.intersection(MapSet.new(second))
+    |> MapSet.intersection(MapSet.new(third))
+  end
+
+  defp to_priority(item) do
+    case item do
+      letter when item in ?a..?z -> letter - ?a + 1
+      letter when item in ?A..?Z -> letter - ?A + 27
+      _ -> raise "Unsupported item #{item}"
+    end
+  end
+end
+```
+
+```elixir
+file_input = Kino.Input.file("Input")
+```
+
+```elixir
+value = Kino.Input.read(file_input)
+path = Kino.Input.file_path(value.file_ref)
+input = File.read!(path)
+
+part_1 = Advent.calculate_misplaced_item_priorities(input)
+part_2 = Advent.calculate_common_item_trio_priorities(input)
+
+IO.puts("Part 1: #{part_1}")
+IO.puts("Part 2: #{part_2}")
+```

@@ -1,0 +1,84 @@
+# 2022-12-04
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.10.0"}
+])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 4: Camp Cleanup
+
+  ## Examples
+
+      iex> input = \"""
+      ...> 2-4,6-8
+      ...> 2-3,4-5
+      ...> 5-7,7-9
+      ...> 2-8,3-7
+      ...> 6-6,4-6
+      ...> 2-6,4-8
+      ...> \"""
+      ...> Advent.count_full_overlaps(input)
+      2
+      ...> Advent.count_partial_overlaps(input)
+      4
+  """
+
+  def count_full_overlaps(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&parse_pairs/1)
+    |> Enum.filter(&fully_overlaps?/1)
+    |> Enum.count()
+  end
+
+  def count_partial_overlaps(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&parse_pairs/1)
+    |> Enum.filter(&partially_overlaps?/1)
+    |> Enum.count()
+  end
+
+  defp parse_pairs(line) do
+    line
+    |> String.split(",")
+    |> Enum.map(&parse_range/1)
+  end
+
+  defp parse_range(range) do
+    range
+    |> String.split("-")
+    |> Enum.map(&String.to_integer/1)
+  end
+
+  defp fully_overlaps?([[a, b], [c, d]]) do
+    (a <= c and b >= d) or (c <= a and d >= b)
+  end
+
+  defp partially_overlaps?([[a, b], [c, d]]) do
+    a <= d and b >= c
+  end
+end
+```
+
+```elixir
+file_input = Kino.Input.file("Input")
+```
+
+```elixir
+value = Kino.Input.read(file_input)
+path = Kino.Input.file_path(value.file_ref)
+input = File.read!(path)
+
+part_1 = Advent.count_full_overlaps(input)
+part_2 = Advent.count_partial_overlaps(input)
+
+IO.puts("Part 1: #{part_1}")
+IO.puts("Part 2: #{part_2}")
+```

@@ -1,0 +1,79 @@
+# 2022-12-01
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.10.0"}
+])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 1: Calorie Counting
+
+  ## Examples
+
+      iex> input = \"""
+      ...> 1000
+      ...> 2000
+      ...> 3000
+      ...> 
+      ...> 4000
+      ...> 
+      ...> 5000
+      ...> 6000
+      ...> 
+      ...> 7000
+      ...> 8000
+      ...> 9000
+      ...> 
+      ...> 10000
+      ...> \"""
+      ...> Advent.find_most_calories(input)
+      24000
+      ...> Advent.find_top_three_calories(input)
+      45000
+  """
+
+  def find_most_calories(input) do
+    input
+    |> String.split("\n\n", trim: true)
+    |> Enum.map(&sum_supplies/1)
+    |> Enum.max()
+  end
+
+  def find_top_three_calories(input) do
+    input
+    |> String.split("\n\n", trim: true)
+    |> Enum.map(&sum_supplies/1)
+    |> Enum.sort(:desc)
+    |> Enum.take(3)
+    |> Enum.sum()
+  end
+
+  defp sum_supplies(supplies) do
+    supplies
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.to_integer/1)
+    |> Enum.sum()
+  end
+end
+```
+
+```elixir
+file_input = Kino.Input.file("Input")
+```
+
+```elixir
+value = Kino.Input.read(file_input)
+path = Kino.Input.file_path(value.file_ref)
+input = File.read!(path)
+
+part_1 = Advent.find_most_calories(input)
+part_2 = Advent.find_top_three_calories(input)
+
+IO.puts("Part 1: #{part_1}")
+IO.puts("Part 2: #{part_2}")
+```
