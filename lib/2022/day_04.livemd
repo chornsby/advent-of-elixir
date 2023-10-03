@@ -25,7 +25,7 @@ defmodule Advent do
       ...> \"""
       ...> Advent.count_full_overlaps(input)
       2
-      ...> Advent.count_partial_overlaps(input)
+      iex> Advent.count_partial_overlaps(input)
       4
   """
 

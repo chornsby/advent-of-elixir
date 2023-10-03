@@ -22,7 +22,7 @@ defmodule Advent do
       ...> \"""
       ...> Advent.sum_naive_scores(input)
       15
-      ...> Advent.sum_correct_scores(input)
+      iex> Advent.sum_correct_scores(input)
       12
   """
 

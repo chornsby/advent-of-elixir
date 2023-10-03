@@ -25,7 +25,7 @@ defmodule Advent do
       ...> \"""
       ...> Advent.calculate_misplaced_item_priorities(input)
       157
-      ...> Advent.calculate_common_item_trio_priorities(input)
+      iex> Advent.calculate_common_item_trio_priorities(input)
       70
   """
 

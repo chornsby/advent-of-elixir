@@ -33,7 +33,7 @@ defmodule Advent do
       ...> \"""
       ...> Advent.find_most_calories(input)
       24000
-      ...> Advent.find_top_three_calories(input)
+      iex> Advent.find_top_three_calories(input)
       45000
   """
 
