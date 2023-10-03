@@ -1,0 +1,103 @@
+# 2022-12-05
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.10.0"}
+])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 5: Supply Stacks
+
+  ## Examples
+
+      iex> input = \"""
+      ...>     [D]    
+      ...> [N] [C]    
+      ...> [Z] [M] [P]
+      ...>  1   2   3 
+      ...> 
+      ...> move 1 from 2 to 1
+      ...> move 3 from 1 to 3
+      ...> move 2 from 2 to 1
+      ...> move 1 from 1 to 2
+      ...> \"""
+      iex> Advent.find_top_crates(input)
+  """
+
+  def find_top_crates(input) do
+    [initial_state, moves] =
+      input
+      |> String.split("\n\n", trim: true)
+
+    final_state =
+      initial_state
+      |> parse_initial_state()
+      |> apply_moves(moves)
+
+    final_state
+  end
+
+  defp parse_initial_state(input) do
+    input
+    |> String.split("\n")
+    |> Enum.drop(-1)
+    |> Enum.map(fn line ->
+      line
+      |> String.to_charlist()
+      |> Enum.drop(1)
+      |> Enum.take_every(4)
+    end)
+    |> Enum.reverse()
+    |> Enum.zip()
+    |> Enum.map(fn line ->
+      line
+      |> Tuple.to_list()
+      |> to_string()
+      |> String.trim()
+      |> String.to_charlist()
+    end)
+  end
+
+  defp apply_moves(state, moves) do
+    state
+  end
+end
+
+input = """
+    [D]    
+[N] [C]    
+[Z] [M] [P]
+ 1   2   3 
+
+move 1 from 2 to 1
+move 3 from 1 to 3
+move 2 from 2 to 1
+move 1 from 1 to 2
+"""
+
+input
+|> Advent.find_top_crates()
+```
+
+```elixir
+file_input = Kino.Input.file("Input")
+```
+
+```elixir
+value = Kino.Input.read(file_input)
+path = Kino.Input.file_path(value.file_ref)
+input = File.read!(path)
+
+# Advent.find_most_calories(input)
+part_1 = nil
+# Advent.find_top_three_calories(input)
+part_2 = nil
+
+IO.puts("Part 1: #{part_1}")
+IO.puts("Part 2: #{part_2}")
+```
