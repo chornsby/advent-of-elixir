@@ -29,42 +29,89 @@ defmodule Advent do
       iex> Advent.find_top_crates(input)
   """
 
+  alias Advent.Move
+  alias Advent.State
+
   def find_top_crates(input) do
-    [initial_state, moves] =
+    [head, tail] =
       input
       |> String.split("\n\n", trim: true)
 
+    initial_state = State.parse(head)
+
+    moves =
+      tail
+      |> String.split("\n", trim: true)
+      |> Enum.map(&Move.parse/1)
+
     final_state =
-      initial_state
-      |> parse_initial_state()
-      |> apply_moves(moves)
+      moves
+      |> Enum.reduce(initial_state, &apply_move/2)
 
-    final_state
+    Range.new(0, map_size(final_state.stacks))
+    |> Enum.map(fn index -> Map.fetch!(final_state.stacks, index) |> Enum.take(1) end)
   end
 
-  defp parse_initial_state(input) do
-    input
-    |> String.split("\n")
-    |> Enum.drop(-1)
-    |> Enum.map(fn line ->
-      line
-      |> String.to_charlist()
-      |> Enum.drop(1)
-      |> Enum.take_every(4)
-    end)
-    |> Enum.reverse()
-    |> Enum.zip()
-    |> Enum.map(fn line ->
-      line
-      |> Tuple.to_list()
-      |> to_string()
-      |> String.trim()
-      |> String.to_charlist()
-    end)
+  defp apply_move(move, state) do
+    {items, remainder} =
+      state.stacks
+      |> Map.fetch!(move.from)
+      |> Enum.split(move.number)
+      |> dbg()
+
+    stacks =
+      state.stacks
+      |> Map.update!(move.to, &(Enum.reverse(items) ++ &1))
+      |> Map.replace!(move.from, remainder)
+
+    %{stacks: stacks}
   end
 
-  defp apply_moves(state, moves) do
-    state
+  defmodule State do
+    defstruct stacks: %{}
+
+    def parse(text) when is_binary(text) do
+      stacks =
+        text
+        |> String.split("\n")
+        |> Enum.drop(-1)
+        |> Enum.map(fn line ->
+          line
+          |> String.to_charlist()
+          |> Enum.drop(1)
+          |> Enum.take_every(4)
+        end)
+        |> Enum.zip()
+        |> Enum.map(fn line ->
+          line
+          |> Tuple.to_list()
+          |> to_string()
+          |> String.trim()
+          |> String.to_charlist()
+        end)
+        |> Enum.with_index(fn element, index -> {index, element} end)
+        |> Map.new()
+
+      %State{stacks: stacks}
+    end
+  end
+
+  defmodule Move do
+    defstruct number: 0, from: 0, to: 0
+
+    def parse(text) when is_binary(text) do
+      [number, from, to] =
+        text
+        |> String.split(" ")
+        |> Enum.drop(1)
+        |> Enum.take_every(2)
+        |> Enum.map(&String.to_integer/1)
+
+      # Convert 1-indexed keys to 0-indexed keys
+      [from, to] = [from - 1, to - 1]
+
+      %Move{number: number, from: from, to: to}
+    end
   end
 end
 
