@@ -1,9 +1,9 @@
+<!-- livebook:{"file_entries":[{"name":"day05.txt","type":"attachment"}]} -->
+
 # 2022-12-05
 
 ```elixir
-Mix.install([
-  {:kino, "~> 0.10.0"}
-])
+Mix.install([:kino])
 ```
 
 ## Solution
@@ -114,37 +114,4 @@ defmodule Advent do
     end
   end
 end
-
-input = """
-    [D]    
-[N] [C]    
-[Z] [M] [P]
- 1   2   3 
-
-move 1 from 2 to 1
-move 3 from 1 to 3
-move 2 from 2 to 1
-move 1 from 1 to 2
-"""
-
-input
-|> Advent.find_top_crates()
-```
-
-```elixir
-file_input = Kino.Input.file("Input")
-```
-
-```elixir
-value = Kino.Input.read(file_input)
-path = Kino.Input.file_path(value.file_ref)
-input = File.read!(path)
-
-# Advent.find_most_calories(input)
-part_1 = nil
-# Advent.find_top_three_calories(input)
-part_2 = nil
-
-IO.puts("Part 1: #{part_1}")
-IO.puts("Part 2: #{part_2}")
 ```

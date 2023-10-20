@@ -1,9 +1,9 @@
+<!-- livebook:{"file_entries":[{"name":"day04.txt","type":"attachment"}]} -->
+
 # 2022-12-04
 
 ```elixir
-Mix.install([
-  {:kino, "~> 0.10.0"}
-])
+Mix.install([:kino])
 ```
 
 ## Solution
@@ -29,6 +29,15 @@ defmodule Advent do
       4
   """
 
+  @doc """
+  Return the number of assignments that fully overlap another.
+
+  ## Examples
+
+      iex> content = Kino.FS.file_path("day04.txt") |> File.read!()
+      ...> Advent.count_full_overlaps(content)
+      532
+  """
   def count_full_overlaps(input) do
     input
     |> String.split("\n", trim: true)
@@ -37,6 +46,15 @@ defmodule Advent do
     |> Enum.count()
   end
 
+  @doc """
+  Return the number of assignments that partially overlap another.
+
+  ## Examples
+
+      iex> content = Kino.FS.file_path("day04.txt") |> File.read!()
+      ...> Advent.count_partial_overlaps(content)
+      854
+  """
   def count_partial_overlaps(input) do
     input
     |> String.split("\n", trim: true)
@@ -65,20 +83,4 @@ defmodule Advent do
     a <= d and b >= c
   end
 end
-```
-
-```elixir
-file_input = Kino.Input.file("Input")
-```
-
-```elixir
-value = Kino.Input.read(file_input)
-path = Kino.Input.file_path(value.file_ref)
-input = File.read!(path)
-
-part_1 = Advent.count_full_overlaps(input)
-part_2 = Advent.count_partial_overlaps(input)
-
-IO.puts("Part 1: #{part_1}")
-IO.puts("Part 2: #{part_2}")
 ```

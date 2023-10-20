@@ -1,9 +1,9 @@
+<!-- livebook:{"file_entries":[{"name":"day01.txt","type":"attachment"}]} -->
+
 # 2022-12-01
 
 ```elixir
-Mix.install([
-  {:kino, "~> 0.10.0"}
-])
+Mix.install([:kino])
 ```
 
 ## Solution
@@ -37,6 +37,15 @@ defmodule Advent do
       45000
   """
 
+  @doc """
+  Return the largest total calories carried by a single elf.
+
+  ## Examples 
+
+      iex> content = Kino.FS.file_path("day01.txt") |> File.read!()
+      ...> Advent.find_most_calories(content)
+      67450
+  """
   def find_most_calories(input) do
     input
     |> String.split("\n\n", trim: true)
@@ -44,6 +53,15 @@ defmodule Advent do
     |> Enum.max()
   end
 
+  @doc """
+  Return the largest total calories carried by three elves.
+
+  ## Examples
+
+      iex> content = Kino.FS.file_path("day01.txt") |> File.read!()
+      ...> Advent.find_top_three_calories(content)
+      199357
+  """
   def find_top_three_calories(input) do
     input
     |> String.split("\n\n", trim: true)
@@ -60,20 +78,4 @@ defmodule Advent do
     |> Enum.sum()
   end
 end
-```
-
-```elixir
-file_input = Kino.Input.file("Input")
-```
-
-```elixir
-value = Kino.Input.read(file_input)
-path = Kino.Input.file_path(value.file_ref)
-input = File.read!(path)
-
-part_1 = Advent.find_most_calories(input)
-part_2 = Advent.find_top_three_calories(input)
-
-IO.puts("Part 1: #{part_1}")
-IO.puts("Part 2: #{part_2}")
 ```

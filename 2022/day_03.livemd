@@ -1,9 +1,9 @@
+<!-- livebook:{"file_entries":[{"name":"day03.txt","type":"attachment"}]} -->
+
 # 2022-12-03
 
 ```elixir
-Mix.install([
-  {:kino, "~> 0.10.0"}
-])
+Mix.install([:kino])
 ```
 
 ## Solution
@@ -29,6 +29,15 @@ defmodule Advent do
       70
   """
 
+  @doc """
+  Return the sum of the misplaced item priorities.
+
+  ## Examples
+
+      iex> content = Kino.FS.file_path("day03.txt") |> File.read!()
+      ...> Advent.calculate_misplaced_item_priorities(content)
+      8139
+  """
   def calculate_misplaced_item_priorities(input) do
     input
     |> String.split("\n", trim: true)
@@ -39,6 +48,15 @@ defmodule Advent do
     |> Enum.sum()
   end
 
+  @doc """
+  Return the sum of item priorities common to sets of three elves.
+
+  ## Examples
+
+      iex> content = Kino.FS.file_path("day03.txt") |> File.read!()
+      ...> Advent.calculate_common_item_trio_priorities(content)
+      2668
+  """
   def calculate_common_item_trio_priorities(input) do
     input
     |> String.split("\n", trim: true)
@@ -74,20 +92,4 @@ defmodule Advent do
     end
   end
 end
-```
-
-```elixir
-file_input = Kino.Input.file("Input")
-```
-
-```elixir
-value = Kino.Input.read(file_input)
-path = Kino.Input.file_path(value.file_ref)
-input = File.read!(path)
-
-part_1 = Advent.calculate_misplaced_item_priorities(input)
-part_2 = Advent.calculate_common_item_trio_priorities(input)
-
-IO.puts("Part 1: #{part_1}")
-IO.puts("Part 2: #{part_2}")
 ```

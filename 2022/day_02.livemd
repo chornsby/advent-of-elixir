@@ -1,9 +1,9 @@
+<!-- livebook:{"file_entries":[{"name":"day02.txt","type":"attachment"}]} -->
+
 # 2022-12-02
 
 ```elixir
-Mix.install([
-  {:kino, "~> 0.10.0"}
-])
+Mix.install([:kino])
 ```
 
 ## Solution
@@ -26,6 +26,15 @@ defmodule Advent do
       12
   """
 
+  @doc """
+  Return the total score following the strategy guide naively.
+
+  ## Examples
+
+      iex> content = Kino.FS.file_path("day02.txt") |> File.read!()
+      ...> Advent.sum_naive_scores(content)
+      15523
+  """
   def sum_naive_scores(input) do
     input
     |> String.split("\n", trim: true)
@@ -33,6 +42,15 @@ defmodule Advent do
     |> Enum.sum()
   end
 
+  @doc """
+  Return the total score following the strategy guide correctly.
+
+  ## Examples
+
+      iex> content = Kino.FS.file_path("day02.txt") |> File.read!()
+      ...> Advent.sum_correct_scores(content)
+      15702
+  """
   def sum_correct_scores(input) do
     input
     |> String.split("\n", trim: true)
@@ -68,20 +86,4 @@ defmodule Advent do
     end
   end
 end
-```
-
-```elixir
-file_input = Kino.Input.file("Input")
-```
-
-```elixir
-value = Kino.Input.read(file_input)
-path = Kino.Input.file_path(value.file_ref)
-input = File.read!(path)
-
-part_1 = Advent.sum_naive_scores(input)
-part_2 = Advent.sum_correct_scores(input)
-
-IO.puts("Part 1: #{part_1}")
-IO.puts("Part 2: #{part_2}")
 ```
