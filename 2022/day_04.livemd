@@ -34,8 +34,8 @@ defmodule Advent do
 
   ## Examples
 
-      iex> content = Kino.FS.file_path("day04.txt") |> File.read!()
-      ...> Advent.count_full_overlaps(content)
+      iex> input = Kino.FS.file_path("day04.txt") |> File.read!()
+      ...> Advent.count_full_overlaps(input)
       532
   """
   def count_full_overlaps(input) do
@@ -51,8 +51,8 @@ defmodule Advent do
 
   ## Examples
 
-      iex> content = Kino.FS.file_path("day04.txt") |> File.read!()
-      ...> Advent.count_partial_overlaps(content)
+      iex> input = Kino.FS.file_path("day04.txt") |> File.read!()
+      ...> Advent.count_partial_overlaps(input)
       854
   """
   def count_partial_overlaps(input) do

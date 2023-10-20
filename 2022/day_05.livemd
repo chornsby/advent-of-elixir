@@ -43,10 +43,10 @@ defmodule Advent do
 
   ## Examples
 
-      iex> content = Kino.FS.file_path("day05.txt") |> File.read!()
-      ...> Advent.find_top_crates(content, :model9000)
+      iex> input = Kino.FS.file_path("day05.txt") |> File.read!()
+      ...> Advent.find_top_crates(input, :model9000)
       "QMBMJDFTD"
-      iex> Advent.find_top_crates(content, :model9001)
+      iex> Advent.find_top_crates(input, :model9001)
       "NBTVTJNFJ"
   """
   def find_top_crates(input, crane) when crane in [:model9000, :model9001] do

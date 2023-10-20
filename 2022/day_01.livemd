@@ -42,8 +42,8 @@ defmodule Advent do
 
   ## Examples 
 
-      iex> content = Kino.FS.file_path("day01.txt") |> File.read!()
-      ...> Advent.find_most_calories(content)
+      iex> input = Kino.FS.file_path("day01.txt") |> File.read!()
+      ...> Advent.find_most_calories(input)
       67450
   """
   def find_most_calories(input) do
@@ -58,8 +58,8 @@ defmodule Advent do
 
   ## Examples
 
-      iex> content = Kino.FS.file_path("day01.txt") |> File.read!()
-      ...> Advent.find_top_three_calories(content)
+      iex> input = Kino.FS.file_path("day01.txt") |> File.read!()
+      ...> Advent.find_top_three_calories(input)
       199357
   """
   def find_top_three_calories(input) do

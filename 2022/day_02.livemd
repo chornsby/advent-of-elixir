@@ -31,8 +31,8 @@ defmodule Advent do
 
   ## Examples
 
-      iex> content = Kino.FS.file_path("day02.txt") |> File.read!()
-      ...> Advent.sum_naive_scores(content)
+      iex> input = Kino.FS.file_path("day02.txt") |> File.read!()
+      ...> Advent.sum_naive_scores(input)
       15523
   """
   def sum_naive_scores(input) do
@@ -47,8 +47,8 @@ defmodule Advent do
 
   ## Examples
 
-      iex> content = Kino.FS.file_path("day02.txt") |> File.read!()
-      ...> Advent.sum_correct_scores(content)
+      iex> input = Kino.FS.file_path("day02.txt") |> File.read!()
+      ...> Advent.sum_correct_scores(input)
       15702
   """
   def sum_correct_scores(input) do

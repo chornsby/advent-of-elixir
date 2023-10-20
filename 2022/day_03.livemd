@@ -34,8 +34,8 @@ defmodule Advent do
 
   ## Examples
 
-      iex> content = Kino.FS.file_path("day03.txt") |> File.read!()
-      ...> Advent.calculate_misplaced_item_priorities(content)
+      iex> input = Kino.FS.file_path("day03.txt") |> File.read!()
+      ...> Advent.calculate_misplaced_item_priorities(input)
       8139
   """
   def calculate_misplaced_item_priorities(input) do
@@ -53,8 +53,8 @@ defmodule Advent do
 
   ## Examples
 
-      iex> content = Kino.FS.file_path("day03.txt") |> File.read!()
-      ...> Advent.calculate_common_item_trio_priorities(content)
+      iex> input = Kino.FS.file_path("day03.txt") |> File.read!()
+      ...> Advent.calculate_common_item_trio_priorities(input)
       2668
   """
   def calculate_common_item_trio_priorities(input) do
