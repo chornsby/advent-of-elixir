@@ -26,78 +26,66 @@ defmodule Advent do
       ...> move 2 from 2 to 1
       ...> move 1 from 1 to 2
       ...> \"""
-      iex> Advent.find_top_crates(input)
+      iex> Advent.find_top_crates(input, :model9000)
+      "CMZ"
+      iex> Advent.find_top_crates(input, :model9001)
+      "MCD"
   """
 
   alias Advent.Move
   alias Advent.State
 
-  def find_top_crates(input) do
-    [head, tail] =
-      input
-      |> String.split("\n\n", trim: true)
+  @doc """
+  Find the crates at the top of each stack after all moves are applied.
 
-    initial_state = State.parse(head)
+  - The Crate Master 9000 `:model9000` moves one crate at a time
+  - The Crate Master 9001 `:model9001` moves multiple crates at a time
+
+  ## Examples
+
+      iex> content = Kino.FS.file_path("day05.txt") |> File.read!()
+      ...> Advent.find_top_crates(content, :model9000)
+      "QMBMJDFTD"
+      iex> Advent.find_top_crates(content, :model9001)
+      "NBTVTJNFJ"
+  """
+  def find_top_crates(input, crane) when crane in [:model9000, :model9001] do
+    [stacks, moves] = String.split(input, "\n\n", trim: true)
+
+    state = State.parse(stacks)
 
     moves =
-      tail
+      moves
       |> String.split("\n", trim: true)
       |> Enum.map(&Move.parse/1)
 
-    final_state =
-      moves
-      |> Enum.reduce(initial_state, &apply_move/2)
+    result = Enum.reduce(moves, state.stacks, &apply_move(&1, &2, crane))
 
-    Range.new(0, map_size(final_state.stacks))
-    |> Enum.map(fn index -> Map.fetch!(final_state.stacks, index) |> Enum.take(1) end)
+    state.labels
+    |> Enum.map(&Map.fetch!(result, &1))
+    |> Enum.map(&List.first/1)
+    |> Enum.join()
   end
 
-  defp apply_move(move, state) do
+  defp apply_move(move, stacks, crane) when crane in [:model9000, :model9001] do
     {items, remainder} =
-      state.stacks
+      stacks
       |> Map.fetch!(move.from)
       |> Enum.split(move.number)
-      |> dbg()
 
-    stacks =
-      state.stacks
-      |> Map.update!(move.to, &(Enum.reverse(items) ++ &1))
-      |> Map.replace!(move.from, remainder)
+    items =
+      case crane do
+        :model9000 -> Enum.reverse(items)
+        :model9001 -> items
+      end
 
-    %{stacks: stacks}
-  end
-
-  defmodule State do
-    defstruct stacks: %{}
-
-    def parse(text) when is_binary(text) do
-      stacks =
-        text
-        |> String.split("\n")
-        |> Enum.drop(-1)
-        |> Enum.map(fn line ->
-          line
-          |> String.to_charlist()
-          |> Enum.drop(1)
-          |> Enum.take_every(4)
-        end)
-        |> Enum.zip()
-        |> Enum.map(fn line ->
-          line
-          |> Tuple.to_list()
-          |> to_string()
-          |> String.trim()
-          |> String.to_charlist()
-        end)
-        |> Enum.with_index(fn element, index -> {index, element} end)
-        |> Map.new()
-
-      %State{stacks: stacks}
-    end
+    stacks
+    |> Map.update!(move.to, &(items ++ &1))
+    |> Map.replace!(move.from, remainder)
   end
 
   defmodule Move do
-    defstruct number: 0, from: 0, to: 0
+    defstruct number: 0, from: "0", to: "0"
 
     def parse(text) when is_binary(text) do
       [number, from, to] =
@@ -105,12 +93,45 @@ defmodule Advent do
         |> String.split(" ")
         |> Enum.drop(1)
         |> Enum.take_every(2)
-        |> Enum.map(&String.to_integer/1)
 
-      # Convert 1-indexed keys to 0-indexed keys
-      [from, to] = [from - 1, to - 1]
+      number = String.to_integer(number)
 
       %Move{number: number, from: from, to: to}
+    end
+  end
+
+  defmodule State do
+    defstruct stacks: %{}, labels: []
+
+    def parse(text) when is_binary(text) do
+      label_to_stacks =
+        text
+        |> String.split("\n")
+        |> Enum.map(fn line ->
+          line
+          |> String.graphemes()
+          |> Enum.drop(1)
+          |> Enum.take_every(4)
+        end)
+        |> Enum.zip()
+        |> Enum.map(fn column ->
+          {label, stack} =
+            column
+            |> Tuple.to_list()
+            |> List.pop_at(-1)
+
+          stack = Enum.reject(stack, &(&1 == " "))
+
+          {label, stack}
+        end)
+
+      labels =
+        label_to_stacks
+        |> Enum.map(&elem(&1, 0))
+
+      stacks = Map.new(label_to_stacks)
+
+      %State{stacks: stacks, labels: labels}
     end
   end
 end
