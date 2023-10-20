@@ -1,0 +1,82 @@
+<!-- livebook:{"file_entries":[{"name":"day06.txt","type":"attachment"}]} -->
+
+# 2022-12-06
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 6: Tuning Trouble
+
+  ## Examples
+
+      iex> Advent.find_start_of_offset("mjqjpqmgbljsphdztnvjfqwrcgsmlb", :packet)
+      7
+
+      iex> Advent.find_start_of_offset("bvwbjplbgvbhsrlpgdmjqwftvncz", :packet)
+      5
+
+      iex> Advent.find_start_of_offset("nppdvjthqldpwncqszvftbrmjlhg", :packet)
+      6
+
+      iex> Advent.find_start_of_offset("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", :packet)
+      10
+
+      iex> Advent.find_start_of_offset("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", :packet)
+      11
+
+      iex> Advent.find_start_of_offset("mjqjpqmgbljsphdztnvjfqwrcgsmlb", :message)
+      19
+
+      iex> Advent.find_start_of_offset("bvwbjplbgvbhsrlpgdmjqwftvncz", :message)
+      23
+
+      iex> Advent.find_start_of_offset("nppdvjthqldpwncqszvftbrmjlhg", :message)
+      23
+
+      iex> Advent.find_start_of_offset("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", :message)
+      29
+
+      iex> Advent.find_start_of_offset("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", :message)
+      26
+  """
+
+  @doc """
+  Find the offset following a start-of-packet or start-of-message marker.
+
+  ## Examples
+
+      iex> input = Kino.FS.file_path("day06.txt") |> File.read!()
+      ...> Advent.find_start_of_offset(input, :packet)
+      1109
+      iex> Advent.find_start_of_offset(input, :message)
+      3965
+  """
+  def find_start_of_offset(input, type) when is_binary(input) and type in [:packet, :message] do
+    window =
+      case type do
+        :packet -> 4
+        :message -> 14
+      end
+
+    offset =
+      input
+      |> String.graphemes()
+      |> Enum.chunk_every(window, 1)
+      |> Enum.find_index(&all_distinct?/1)
+
+    offset + window
+  end
+
+  defp all_distinct?(items) when is_list(items) do
+    items_distinct = MapSet.new(items)
+
+    MapSet.size(items_distinct) == length(items)
+  end
+end
+```
