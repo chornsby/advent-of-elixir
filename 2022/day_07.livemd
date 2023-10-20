@@ -1,0 +1,111 @@
+<!-- livebook:{"file_entries":[{"name":"day07.txt","type":"attachment"}]} -->
+
+# 2022-12-07
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 7: No Space Left On Device
+
+  ## Examples
+
+      iex> input = \"""
+      ...> $ cd /
+      ...> $ ls
+      ...> dir a
+      ...> 14848514 b.txt
+      ...> 8504156 c.dat
+      ...> dir d
+      ...> $ cd a
+      ...> $ ls
+      ...> dir e
+      ...> 29116 f
+      ...> 2557 g
+      ...> 62596 h.lst
+      ...> $ cd e
+      ...> $ ls
+      ...> 584 i
+      ...> $ cd ..
+      ...> $ cd ..
+      ...> $ cd d
+      ...> $ ls
+      ...> 4060174 j
+      ...> 8033020 d.log
+      ...> 5626152 d.ext
+      ...> 7214296 k
+      ...> \"""
+  """
+
+  alias Advent.Directory
+  alias Advent.File
+
+  def sum_size_of_small_directories(input) when is_binary(input) do
+    input
+    |> String.split("$", trim: true)
+    |> Enum.reduce(%{}, &parse_command/2)
+    |> dbg()
+
+    0
+  end
+
+  defp parse_command(input, root) when is_binary(input) do
+    input
+    |> String.trim()
+  end
+
+  defmodule Directory do
+    defstruct name: "", children: [], files: []
+
+    def size(directory) when is_struct(directory, Directory) do
+      direct =
+        directory.files
+        |> Enum.map(& &1.size)
+        |> Enum.sum()
+
+      indirect =
+        directory.children
+        |> Enum.map(&Directory.size/1)
+        |> Enum.sum()
+
+      direct + indirect
+    end
+  end
+
+  defmodule File do
+    defstruct name: "", size: 0
+  end
+end
+
+"""
+$ cd /
+$ ls
+dir a
+14848514 b.txt
+8504156 c.dat
+dir d
+$ cd a
+$ ls
+dir e
+29116 f
+2557 g
+62596 h.lst
+$ cd e
+$ ls
+584 i
+$ cd ..
+$ cd ..
+$ cd d
+$ ls
+4060174 j
+8033020 d.log
+5626152 d.ext
+7214296 k
+"""
+|> Advent.sum_size_of_small_directories()
+```
