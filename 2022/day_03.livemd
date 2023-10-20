@@ -62,7 +62,6 @@ defmodule Advent do
     |> String.split("\n", trim: true)
     |> Enum.map(&String.to_charlist/1)
     |> Enum.chunk_every(3)
-    |> Enum.map(&List.to_tuple/1)
     |> Enum.flat_map(&find_common_items/1)
     |> Enum.map(&to_priority/1)
     |> Enum.sum()
@@ -71,17 +70,13 @@ defmodule Advent do
   defp split_compartments(line) do
     line
     |> Enum.split(div(length(line), 2))
+    |> Tuple.to_list()
   end
 
-  defp find_common_items({first, second}) do
-    MapSet.new(first)
-    |> MapSet.intersection(MapSet.new(second))
-  end
-
-  defp find_common_items({first, second, third}) do
-    MapSet.new(first)
-    |> MapSet.intersection(MapSet.new(second))
-    |> MapSet.intersection(MapSet.new(third))
+  defp find_common_items(lists) do
+    lists
+    |> Enum.map(&MapSet.new/1)
+    |> Enum.reduce(&MapSet.intersection/2)
   end
 
   defp to_priority(item) do
