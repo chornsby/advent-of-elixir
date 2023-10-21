@@ -13,8 +13,6 @@ defmodule Advent do
   @moduledoc """
   Day 7: No Space Left On Device
 
-  ## Examples
-
       iex> input = \"""
       ...> $ cd /
       ...> $ ls
@@ -40,72 +38,82 @@ defmodule Advent do
       ...> 5626152 d.ext
       ...> 7214296 k
       ...> \"""
+      ...> Advent.sum_size_of_small_directories(input)
+      95437
+      iex> Advent.find_smallest_directory_to_delete(input)
+      24933642
   """
 
-  alias Advent.Directory
-  alias Advent.File
+  @doc """
+  Return the total size of all directories below a size limit.
 
-  def sum_size_of_small_directories(input) when is_binary(input) do
-    input
-    |> String.split("$", trim: true)
-    |> Enum.reduce(%{}, &parse_command/2)
-    |> dbg()
+      iex> input = Kino.FS.file_path("day07.txt") |> File.read!()
+      ...> Advent.sum_size_of_small_directories(input)
+      1723892
 
-    0
+  """
+  def sum_size_of_small_directories(input, limit_size \\ 100_000) do
+    calculate_directory_sizes(input)
+    |> Enum.filter(&(&1 <= limit_size))
+    |> Enum.sum()
   end
 
-  defp parse_command(input, root) when is_binary(input) do
-    input
-    |> String.trim()
+  @doc """
+  Return the total size of all directories below a size limit.
+
+      iex> input = Kino.FS.file_path("day07.txt") |> File.read!()
+      ...> Advent.find_smallest_directory_to_delete(input)
+      8474158
+  """
+  def find_smallest_directory_to_delete(
+        input,
+        total_size \\ 70_000_000,
+        required_size \\ 30_000_000
+      ) do
+    directory_sizes = calculate_directory_sizes(input)
+
+    used_size = hd(directory_sizes)
+    unused_size = total_size - used_size
+
+    to_reclaim_size = required_size - unused_size
+
+    directory_sizes
+    |> Enum.filter(&(to_reclaim_size <= &1))
+    |> Enum.min()
   end
 
-  defmodule Directory do
-    defstruct name: "", children: [], files: []
+  defp calculate_directory_sizes(input) do
+    {directories, parents} =
+      input
+      |> String.split("\n", trim: true)
+      |> Enum.reject(&(&1 == "$ ls"))
+      |> Enum.reject(&String.starts_with?(&1, "dir "))
+      |> Enum.flat_map_reduce(
+        [],
+        fn
+          "$ cd ..", [directory_size, parent_size | parents] ->
+            {[directory_size], [directory_size + parent_size | parents]}
 
-    def size(directory) when is_struct(directory, Directory) do
-      direct =
-        directory.files
-        |> Enum.map(& &1.size)
-        |> Enum.sum()
+          "$ cd " <> _, acc ->
+            {[], [0 | acc]}
 
-      indirect =
-        directory.children
-        |> Enum.map(&Directory.size/1)
-        |> Enum.sum()
+          file, [directory_size | parents] ->
+            file_size =
+              file
+              |> String.split(" ")
+              |> hd()
+              |> String.to_integer()
 
-      direct + indirect
-    end
-  end
+            {[], [file_size + directory_size | parents]}
+        end
+      )
 
-  defmodule File do
-    defstruct name: "", size: 0
+    parents =
+      parents
+      |> Enum.scan(&(&1 + &2))
+      |> Enum.reverse()
+
+    parents ++ directories
   end
 end
-
-"""
-$ cd /
-$ ls
-dir a
-14848514 b.txt
-8504156 c.dat
-dir d
-$ cd a
-$ ls
-dir e
-29116 f
-2557 g
-62596 h.lst
-$ cd e
-$ ls
-584 i
-$ cd ..
-$ cd ..
-$ cd d
-$ ls
-4060174 j
-8033020 d.log
-5626152 d.ext
-7214296 k
-"""
-|> Advent.sum_size_of_small_directories()
 ```
