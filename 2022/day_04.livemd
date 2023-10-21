@@ -13,8 +13,6 @@ defmodule Advent do
   @moduledoc """
   Day 4: Camp Cleanup
 
-  ## Examples
-
       iex> input = \"""
       ...> 2-4,6-8
       ...> 2-3,4-5
@@ -32,8 +30,6 @@ defmodule Advent do
   @doc """
   Return the number of assignments that fully overlap another.
 
-  ## Examples
-
       iex> input = Kino.FS.file_path("day04.txt") |> File.read!()
       ...> Advent.count_full_overlaps(input)
       532
@@ -48,8 +44,6 @@ defmodule Advent do
 
   @doc """
   Return the number of assignments that partially overlap another.
-
-  ## Examples
 
       iex> input = Kino.FS.file_path("day04.txt") |> File.read!()
       ...> Advent.count_partial_overlaps(input)

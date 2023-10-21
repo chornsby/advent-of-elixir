@@ -13,8 +13,6 @@ defmodule Advent do
   @moduledoc """
   Day 1: Calorie Counting
 
-  ## Examples
-
       iex> input = \"""
       ...> 1000
       ...> 2000
@@ -40,8 +38,6 @@ defmodule Advent do
   @doc """
   Return the largest total calories carried by a single elf.
 
-  ## Examples 
-
       iex> input = Kino.FS.file_path("day01.txt") |> File.read!()
       ...> Advent.find_most_calories(input)
       67450
@@ -55,8 +51,6 @@ defmodule Advent do
 
   @doc """
   Return the largest total calories carried by three elves.
-
-  ## Examples
 
       iex> input = Kino.FS.file_path("day01.txt") |> File.read!()
       ...> Advent.find_top_three_calories(input)

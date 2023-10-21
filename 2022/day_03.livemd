@@ -13,8 +13,6 @@ defmodule Advent do
   @moduledoc """
   Day 3: Rucksack Reorganization
 
-  ## Examples
-
       iex> input = \"""
       ...> vJrwpWtwJgWrhcsFMMfFFhFp
       ...> jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
@@ -32,8 +30,6 @@ defmodule Advent do
   @doc """
   Return the sum of the misplaced item priorities.
 
-  ## Examples
-
       iex> input = Kino.FS.file_path("day03.txt") |> File.read!()
       ...> Advent.calculate_misplaced_item_priorities(input)
       8139
@@ -50,8 +46,6 @@ defmodule Advent do
 
   @doc """
   Return the sum of item priorities common to sets of three elves.
-
-  ## Examples
 
       iex> input = Kino.FS.file_path("day03.txt") |> File.read!()
       ...> Advent.calculate_common_item_trio_priorities(input)

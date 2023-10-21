@@ -13,8 +13,6 @@ defmodule Advent do
   @moduledoc """
   Day 2: Rock Paper Scissors
 
-  ## Examples
-
       iex> input = \"""
       ...> A Y
       ...> B X
@@ -29,8 +27,6 @@ defmodule Advent do
   @doc """
   Return the total score following the strategy guide naively.
 
-  ## Examples
-
       iex> input = Kino.FS.file_path("day02.txt") |> File.read!()
       ...> Advent.sum_naive_scores(input)
       15523
@@ -44,8 +40,6 @@ defmodule Advent do
 
   @doc """
   Return the total score following the strategy guide correctly.
-
-  ## Examples
 
       iex> input = Kino.FS.file_path("day02.txt") |> File.read!()
       ...> Advent.sum_correct_scores(input)

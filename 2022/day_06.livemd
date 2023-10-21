@@ -13,8 +13,6 @@ defmodule Advent do
   @moduledoc """
   Day 6: Tuning Trouble
 
-  ## Examples
-
       iex> Advent.find_start_of_offset("mjqjpqmgbljsphdztnvjfqwrcgsmlb", :packet)
       7
 
@@ -48,8 +46,6 @@ defmodule Advent do
 
   @doc """
   Find the offset following a start-of-packet or start-of-message marker.
-
-  ## Examples
 
       iex> input = Kino.FS.file_path("day06.txt") |> File.read!()
       ...> Advent.find_start_of_offset(input, :packet)

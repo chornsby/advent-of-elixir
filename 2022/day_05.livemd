@@ -13,8 +13,6 @@ defmodule Advent do
   @moduledoc """
   Day 5: Supply Stacks
 
-  ## Examples
-
       iex> input = \"""
       ...>     [D]    
       ...> [N] [C]    
@@ -40,8 +38,6 @@ defmodule Advent do
 
   - The Crate Master 9000 `:model9000` moves one crate at a time
   - The Crate Master 9001 `:model9001` moves multiple crates at a time
-
-  ## Examples
 
       iex> input = Kino.FS.file_path("day05.txt") |> File.read!()
       ...> Advent.find_top_crates(input, :model9000)
