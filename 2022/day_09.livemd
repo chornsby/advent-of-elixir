@@ -1,0 +1,118 @@
+<!-- livebook:{"file_entries":[{"name":"day09.txt","type":"attachment"}]} -->
+
+# 2022-12-09
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 9: Rope Bridge
+
+      iex> input = \"""
+      ...> R 4
+      ...> U 4
+      ...> L 3
+      ...> D 1
+      ...> R 4
+      ...> D 1
+      ...> L 5
+      ...> R 2
+      ...> \"""
+      ...> Advent.count_distinct_tail_positions(input, 1)
+      13
+
+      iex> input = \"""
+      ...> R 5
+      ...> U 8
+      ...> L 8
+      ...> D 3
+      ...> R 17
+      ...> D 10
+      ...> L 25
+      ...> U 20
+      ...> \"""
+      ...> Advent.count_distinct_tail_positions(input, 9)
+      36
+  """
+
+  @doc """
+  Return the number of distinct positions the tail occupied.
+
+      iex> input = Kino.FS.file_path("day09.txt") |> File.read!()
+      ...> Advent.count_distinct_tail_positions(input, 1)
+      5513
+      iex> Advent.count_distinct_tail_positions(input, 9)
+      2427
+  """
+  def count_distinct_tail_positions(input, length) when is_binary(input) do
+    input
+    |> parse_moves()
+    |> Enum.scan({0, 0}, &move_head/2)
+    |> move_tails(length)
+    |> Enum.uniq()
+    |> Enum.count()
+  end
+
+  defp move_head(:up, {x, y}), do: {x, y + 1}
+  defp move_head(:down, {x, y}), do: {x, y - 1}
+  defp move_head(:left, {x, y}), do: {x - 1, y}
+  defp move_head(:right, {x, y}), do: {x + 1, y}
+
+  defp move_tails(positions, 0), do: positions
+
+  defp move_tails(positions, times) do
+    positions
+    |> Enum.scan({0, 0}, &move_tail/2)
+    |> move_tails(times - 1)
+  end
+
+  defp move_tail({hx, hy}, {x, y}) do
+    {dx, dy} = {hx - x, hy - y}
+
+    x =
+      case dx do
+        +2 -> x + 1
+        +1 when 1 < abs(dy) -> x + 1
+        -1 when 1 < abs(dy) -> x - 1
+        -2 -> x - 1
+        _ -> x
+      end
+
+    y =
+      case dy do
+        +2 -> y + 1
+        +1 when 1 < abs(dx) -> y + 1
+        -1 when 1 < abs(dx) -> y - 1
+        -2 -> y - 1
+        _ -> y
+      end
+
+    {x, y}
+  end
+
+  defp parse_moves(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.flat_map(fn line ->
+      [direction, count] = String.split(line, " ")
+
+      direction =
+        case direction do
+          "U" -> :up
+          "D" -> :down
+          "L" -> :left
+          "R" -> :right
+        end
+
+      count = String.to_integer(count)
+
+      List.duplicate(direction, count)
+    end)
+  end
+end
+```
