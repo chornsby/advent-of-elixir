@@ -1,0 +1,118 @@
+<!-- livebook:{"file_entries":[{"name":"day08.txt","type":"attachment"}]} -->
+
+# 2022-12-08
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 8: Treetop Tree House
+
+      iex> input = \"""
+      ...> 30373
+      ...> 25512
+      ...> 65332
+      ...> 33549
+      ...> 35390
+      ...> \"""
+      ...> Advent.count_visible_trees(input)
+      21
+      iex> Advent.find_highest_scenic_score(input)
+      8
+  """
+
+  @directions [:up, :down, :left, :right]
+
+  @doc """
+  Count the number of trees visible from outside the forest.
+
+      iex> input = Kino.FS.file_path("day08.txt") |> File.read!()
+      ...> Advent.count_visible_trees(input)
+      1708
+  """
+  def count_visible_trees(input) when is_binary(input) do
+    grid = parse_grid(input)
+
+    grid
+    |> Enum.filter(fn {{x, y}, height} -> visible?(x, y, height, grid) end)
+    |> Enum.count()
+  end
+
+  @doc """
+  Find the highest product of tree counts visible from a single tree.
+
+      iex> input = Kino.FS.file_path("day08.txt") |> File.read!()
+      ...> Advent.find_highest_scenic_score(input)
+      504000
+  """
+  def find_highest_scenic_score(input) when is_binary(input) do
+    grid = parse_grid(input)
+
+    grid
+    |> Enum.map(fn {{x, y}, height} -> scenic_score(x, y, height, grid) end)
+    |> Enum.max()
+  end
+
+  defp parse_grid(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {row, y} ->
+      row
+      |> String.graphemes()
+      |> Enum.with_index()
+      |> Enum.map(fn {height, x} ->
+        {{x, y}, String.to_integer(height)}
+      end)
+    end)
+    |> Enum.into(%{})
+  end
+
+  defp neighbour(direction, x, y) when direction in @directions do
+    case direction do
+      :right -> {x + 1, y}
+      :down -> {x, y + 1}
+      :left -> {x - 1, y}
+      :up -> {x, y - 1}
+    end
+  end
+
+  defp visible?(x, y, height, grid) do
+    @directions
+    |> Enum.any?(&visible_from?(&1, x, y, height, grid))
+  end
+
+  defp visible_from?(direction, x, y, height, grid) when direction in @directions do
+    {i, j} = neighbour(direction, x, y)
+    check_height = grid[{i, j}]
+
+    cond do
+      check_height == nil -> true
+      height <= check_height -> false
+      true -> visible_from?(direction, i, j, height, grid)
+    end
+  end
+
+  defp scenic_score(x, y, height, grid) do
+    @directions
+    |> Enum.map(&scenic_score_from(&1, x, y, height, grid))
+    |> Enum.product()
+  end
+
+  defp scenic_score_from(direction, x, y, height, grid) when direction in @directions do
+    {i, j} = neighbour(direction, x, y)
+    check_height = grid[{i, j}]
+
+    cond do
+      check_height == nil -> 0
+      height <= check_height -> 1
+      true -> 1 + scenic_score_from(direction, i, j, height, grid)
+    end
+  end
+end
+```
