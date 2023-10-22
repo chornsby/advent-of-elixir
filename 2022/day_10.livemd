@@ -1,0 +1,233 @@
+<!-- livebook:{"file_entries":[{"name":"day10.txt","type":"attachment"}]} -->
+
+# 2022-12-10
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 10: Cathode-Ray Tube
+
+      iex> input = \"""
+      ...> addx 15
+      ...> addx -11
+      ...> addx 6
+      ...> addx -3
+      ...> addx 5
+      ...> addx -1
+      ...> addx -8
+      ...> addx 13
+      ...> addx 4
+      ...> noop
+      ...> addx -1
+      ...> addx 5
+      ...> addx -1
+      ...> addx 5
+      ...> addx -1
+      ...> addx 5
+      ...> addx -1
+      ...> addx 5
+      ...> addx -1
+      ...> addx -35
+      ...> addx 1
+      ...> addx 24
+      ...> addx -19
+      ...> addx 1
+      ...> addx 16
+      ...> addx -11
+      ...> noop
+      ...> noop
+      ...> addx 21
+      ...> addx -15
+      ...> noop
+      ...> noop
+      ...> addx -3
+      ...> addx 9
+      ...> addx 1
+      ...> addx -3
+      ...> addx 8
+      ...> addx 1
+      ...> addx 5
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> addx -36
+      ...> noop
+      ...> addx 1
+      ...> addx 7
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> addx 2
+      ...> addx 6
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> addx 1
+      ...> noop
+      ...> noop
+      ...> addx 7
+      ...> addx 1
+      ...> noop
+      ...> addx -13
+      ...> addx 13
+      ...> addx 7
+      ...> noop
+      ...> addx 1
+      ...> addx -33
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> addx 2
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> addx 8
+      ...> noop
+      ...> addx -1
+      ...> addx 2
+      ...> addx 1
+      ...> noop
+      ...> addx 17
+      ...> addx -9
+      ...> addx 1
+      ...> addx 1
+      ...> addx -3
+      ...> addx 11
+      ...> noop
+      ...> noop
+      ...> addx 1
+      ...> noop
+      ...> addx 1
+      ...> noop
+      ...> noop
+      ...> addx -13
+      ...> addx -19
+      ...> addx 1
+      ...> addx 3
+      ...> addx 26
+      ...> addx -30
+      ...> addx 12
+      ...> addx -1
+      ...> addx 3
+      ...> addx 1
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> addx -9
+      ...> addx 18
+      ...> addx 1
+      ...> addx 2
+      ...> noop
+      ...> noop
+      ...> addx 9
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> addx -1
+      ...> addx 2
+      ...> addx -37
+      ...> addx 1
+      ...> addx 3
+      ...> noop
+      ...> addx 15
+      ...> addx -21
+      ...> addx 22
+      ...> addx -6
+      ...> addx 1
+      ...> noop
+      ...> addx 2
+      ...> addx 1
+      ...> noop
+      ...> addx -10
+      ...> noop
+      ...> noop
+      ...> addx 20
+      ...> addx 1
+      ...> addx 2
+      ...> addx 2
+      ...> addx -6
+      ...> addx -11
+      ...> noop
+      ...> noop
+      ...> noop
+      ...> \"""
+      ...> Advent.sum_signals(input)
+      13140
+      iex> expected = \"""
+      ...> ##..##..##..##..##..##..##..##..##..##..
+      ...> ###...###...###...###...###...###...###.
+      ...> ####....####....####....####....####....
+      ...> #####.....#####.....#####.....#####.....
+      ...> ######......######......######......####
+      ...> #######.......#######.......#######.....
+      ...> \"""
+      ...> |> String.trim()
+      ...> Advent.draw_signals(input)
+      expected
+  """
+
+  @doc """
+  Sum the requested signal strengths multiplied by their cycle.
+
+      iex> input = Kino.FS.file_path("day10.txt") |> File.read!()
+      ...> Advent.sum_signals(input)
+      13740
+  """
+  def sum_signals(input) when is_binary(input) do
+    calculate_signals(input)
+    |> Enum.with_index(1)
+    |> Enum.drop(19)
+    |> Enum.take_every(40)
+    |> Enum.map(fn {signal, index} -> signal * index end)
+    |> Enum.sum()
+  end
+
+  @doc """
+  Draw the signals on the CRT screen.
+
+      iex> input = Kino.FS.file_path("day10.txt") |> File.read!()
+      ...> Advent.draw_signals(input)
+      ...> |> IO.puts()
+      :ok
+  """
+  def draw_signals(input, width \\ 40, tolerance \\ 2) when is_binary(input) do
+    calculate_signals(input)
+    |> Enum.with_index()
+    |> Enum.map(fn {signal, index} ->
+      pixel = rem(index, width)
+      lit? = abs(signal - pixel) < tolerance
+
+      if lit?, do: "#", else: "."
+    end)
+    |> Enum.chunk_every(width)
+    |> Enum.map(&Enum.join/1)
+    |> Enum.join("\n")
+  end
+
+  defp calculate_signals(input, initial_signal \\ 1) when is_binary(input) do
+    {signals, _} =
+      input
+      |> String.split("\n", trim: true)
+      |> Enum.map(&parse_instruction/1)
+      |> Enum.flat_map_reduce(initial_signal, fn
+        {:addx, value}, signal -> {[signal, signal], signal + value}
+        {:noop}, signal -> {[signal], signal}
+      end)
+
+    signals
+  end
+
+  defp parse_instruction("addx " <> value), do: {:addx, String.to_integer(value)}
+  defp parse_instruction("noop"), do: {:noop}
+end
+```
