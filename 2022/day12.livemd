@@ -1,0 +1,118 @@
+<!-- livebook:{"file_entries":[{"name":"day12.txt","type":"attachment"}]} -->
+
+# 2022-12-12
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 12: Hill Climbing Algorithm
+
+      iex> input = \"""
+      ...> Sabqponm
+      ...> abcryxxl
+      ...> accszExk
+      ...> acctuvwj
+      ...> abdefghi
+      ...> \"""
+      ...> Advent.shortest_path_length(input, :start)
+      31
+      iex> Advent.shortest_path_length(input, :a)
+      29
+  """
+
+  @min_height ?a - ?a
+  @max_height ?z - ?a
+
+  @doc """
+  Return the length of the shortest path from :start to :finish.
+
+  Implemented as a recursive breadth first search.
+
+      iex> input = Kino.FS.file_path("day12.txt") |> File.read!()
+      ...> Advent.shortest_path_length(input, :start)
+      423
+      iex> Advent.shortest_path_length(input, :a)
+      416
+  """
+  def shortest_path_length(input, from) when is_binary(input) and from in [:start, :a] do
+    grid = parse(input)
+
+    start_positions =
+      grid
+      |> Map.filter(fn {_, value} ->
+        case from do
+          :start -> value == :start
+          :a -> value in [:start, @min_height]
+        end
+      end)
+      |> Map.keys()
+
+    visited = MapSet.new()
+
+    search(start_positions, visited, grid)
+  end
+
+  defp search(positions, visited, grid) do
+    adjacent_positions =
+      positions
+      |> Enum.flat_map(&adjacent(&1, grid))
+      |> Enum.reject(&(&1 in visited))
+      |> Enum.uniq()
+
+    if Enum.any?(adjacent_positions, &(grid[&1] == :finish)) do
+      1
+    else
+      visited = MapSet.union(visited, MapSet.new(positions))
+      positions = adjacent_positions
+
+      search(positions, visited, grid) + 1
+    end
+  end
+
+  defp adjacent({x, y}, grid) do
+    current_height = height({x, y}, grid)
+    valid_step? = &(height(&1, grid) <= current_height + 1)
+
+    [
+      {x, y + 1},
+      {x, y - 1},
+      {x - 1, y},
+      {x + 1, y}
+    ]
+    |> Enum.filter(valid_step?)
+  end
+
+  defp height({x, y}, grid) do
+    case grid[{x, y}] do
+      :start -> @min_height
+      :finish -> @max_height
+      char -> char
+    end
+  end
+
+  defp parse(input) when is_binary(input) do
+    input
+    |> String.trim()
+    |> String.split("\n", trim: true)
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {row, y} ->
+      row
+      |> String.to_charlist()
+      |> Enum.map(&parse_cell/1)
+      |> Enum.with_index()
+      |> Enum.map(fn {height, x} -> {{x, y}, height} end)
+    end)
+    |> Enum.into(%{})
+  end
+
+  defp parse_cell(?S), do: :start
+  defp parse_cell(?E), do: :finish
+  defp parse_cell(char), do: char - ?a
+end
+```
