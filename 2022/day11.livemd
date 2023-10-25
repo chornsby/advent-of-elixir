@@ -1,0 +1,181 @@
+<!-- livebook:{"file_entries":[{"name":"day11.txt","type":"attachment"}]} -->
+
+# 2022-12-11
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 11: Monkey in the Middle
+
+      iex> input = \"""
+      ...> Monkey 0:
+      ...>   Starting items: 79, 98
+      ...>   Operation: new = old * 19
+      ...>   Test: divisible by 23
+      ...>     If true: throw to monkey 2
+      ...>     If false: throw to monkey 3
+      ...> 
+      ...> Monkey 1:
+      ...>   Starting items: 54, 65, 75, 74
+      ...>   Operation: new = old + 6
+      ...>   Test: divisible by 19
+      ...>     If true: throw to monkey 2
+      ...>     If false: throw to monkey 0
+      ...> 
+      ...> Monkey 2:
+      ...>   Starting items: 79, 60, 97
+      ...>   Operation: new = old * old
+      ...>   Test: divisible by 13
+      ...>     If true: throw to monkey 1
+      ...>     If false: throw to monkey 3
+      ...> 
+      ...> Monkey 3:
+      ...>   Starting items: 74
+      ...>   Operation: new = old + 3
+      ...>   Test: divisible by 17
+      ...>     If true: throw to monkey 0
+      ...>     If false: throw to monkey 1
+      ...> \"""
+      ...> Advent.calculate_monkey_business(input, 20, :relief)
+      10605
+      iex> Advent.calculate_monkey_business(input, 10_000, :no_relief)
+      2713310158
+  """
+
+  alias Advent.Monkey
+
+  @doc """
+  Return the result of the stuff-slinging simian shenanigans.
+
+      iex> input = Kino.FS.file_path("day11.txt") |> File.read!()
+      ...> Advent.calculate_monkey_business(input, 20, :relief)
+      76728
+      iex> Advent.calculate_monkey_business(input, 10_000, :no_relief)
+      21553910156
+  """
+  def calculate_monkey_business(input, rounds, mode)
+      when is_binary(input) and mode in [:relief, :no_relief] do
+    monkeys =
+      input
+      |> String.split("\n\n", trim: true)
+      |> Enum.map(&Monkey.parse/1)
+      |> Enum.into(%{}, fn %{id: id} = monkey -> {id, monkey} end)
+
+    monkey_ids = monkeys |> Map.keys() |> Enum.sort()
+
+    lcm = monkeys |> Map.values() |> Enum.map(& &1.division_test) |> Enum.product()
+    relief = if mode == :relief, do: 3, else: 1
+
+    1..rounds
+    |> Enum.reduce(monkeys, fn _, monkeys ->
+      monkey_ids
+      |> Enum.reduce(monkeys, fn id, monkeys ->
+        monkeys =
+          monkeys[id].items
+          |> Enum.reduce(monkeys, fn item, monkeys ->
+            worry =
+              item
+              |> perform_operation(monkeys[id].operation)
+              |> reduce_worry(lcm, relief)
+
+            result = passes_test?(worry, monkeys[id])
+            target_id = if result, do: monkeys[id].if_true, else: monkeys[id].if_false
+
+            update_in(monkeys[target_id].items, &(&1 ++ [worry]))
+          end)
+
+        update_in(monkeys[id], &discard_items/1)
+      end)
+    end)
+    |> Map.values()
+    |> Enum.map(& &1.inspection_count)
+    |> Enum.sort(:desc)
+    |> Enum.take(2)
+    |> Enum.product()
+  end
+
+  defp perform_operation(item, [left, operator, right]) do
+    left = if left == :old, do: item, else: left
+    right = if right == :old, do: item, else: right
+
+    operator.(left, right)
+  end
+
+  defp reduce_worry(item, lcm, relief) do
+    item
+    |> rem(lcm)
+    |> div(relief)
+  end
+
+  defp passes_test?(item, monkey) do
+    rem(item, monkey.division_test) == 0
+  end
+
+  defp discard_items(monkey) do
+    %{
+      items: items,
+      inspection_count: inspection_count
+    } = monkey
+
+    %{monkey | items: [], inspection_count: inspection_count + length(items)}
+  end
+
+  defmodule Monkey do
+    defstruct id: 0,
+              items: [],
+              operation: [],
+              division_test: 0,
+              if_true: 0,
+              if_false: 0,
+              inspection_count: 0
+
+    def parse(input) do
+      %Monkey{
+        id: parse_integer(input, ~r/Monkey (\d+):/),
+        items: parse_items(input),
+        operation: parse_operation(input),
+        division_test: parse_integer(input, ~r/Test: divisible by (\d+)/),
+        if_true: parse_integer(input, ~r/If true: throw to monkey (\d+)/),
+        if_false: parse_integer(input, ~r/If false: throw to monkey (\d+)/)
+      }
+    end
+
+    defp parse_integer(input, pattern) do
+      input
+      |> capture_one(pattern)
+      |> String.to_integer()
+    end
+
+    defp parse_items(input) do
+      input
+      |> capture_one(~r/Starting items: (.*)/)
+      |> String.split(", ")
+      |> Enum.map(&String.to_integer/1)
+    end
+
+    defp parse_operation(input) do
+      input
+      |> capture_one(~r/Operation: new = (.*)/)
+      |> String.split(" ")
+      |> Enum.map(fn
+        "old" -> :old
+        "*" -> &*/2
+        "+" -> &+/2
+        value -> String.to_integer(value)
+      end)
+    end
+
+    defp capture_one(input, pattern) do
+      pattern
+      |> Regex.run(input, capture: :all_but_first)
+      |> hd()
+    end
+  end
+end
+```
