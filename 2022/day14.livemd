@@ -52,8 +52,7 @@ defmodule Advent do
     |> Cave.count_sand()
   end
 
-  # TODO
-  def parse_grid(input) when is_binary(input) do
+  defp parse_grid(input) when is_binary(input) do
     input
     |> String.split("\n", trim: true)
     |> Enum.flat_map(&parse_path/1)
@@ -151,18 +150,4 @@ defmodule Advent do
     end
   end
 end
-```
-
-```elixir
-input = Kino.FS.file_path("day14.txt") |> File.read!()
-
-:eprof.start_profiling([self()])
-
-1..100
-|> Enum.each(fn _ ->
-  Advent.count_resting_sand(input, :void)
-end)
-
-:eprof.stop_profiling()
-:eprof.analyze()
 ```
