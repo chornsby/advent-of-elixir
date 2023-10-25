@@ -1,0 +1,114 @@
+<!-- livebook:{"file_entries":[{"name":"day13.txt","type":"attachment"}]} -->
+
+# 2022-12-13
+
+```elixir
+Mix.install([:jason, :kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 13: Distress Signal
+
+      iex> input = \"""
+      ...> [1,1,3,1,1]
+      ...> [1,1,5,1,1]
+      ...> 
+      ...> [[1],[2,3,4]]
+      ...> [[1],4]
+      ...> 
+      ...> [9]
+      ...> [[8,7,6]]
+      ...> 
+      ...> [[4,4],4,4]
+      ...> [[4,4],4,4,4]
+      ...> 
+      ...> [7,7,7,7]
+      ...> [7,7,7]
+      ...> 
+      ...> []
+      ...> [3]
+      ...> 
+      ...> [[[]]]
+      ...> [[]]
+      ...> 
+      ...> [1,[2,[3,[4,[5,6,7]]]],8,9]
+      ...> [1,[2,[3,[4,[5,6,0]]]],8,9]
+      ...> \"""
+      ...> Advent.sum_sorted_pairs(input)
+      13
+      iex> Advent.decoder_key(input)
+      140
+  """
+
+  @doc """
+  Return the sum of the indices of sorted pairs of packets.
+
+      iex> input = Kino.FS.file_path("day13.txt") |> File.read!()
+      ...> Advent.sum_sorted_pairs(input)
+      5198
+  """
+  def sum_sorted_pairs(input) when is_binary(input) do
+    parse(input)
+    |> Enum.chunk_every(2)
+    |> Enum.with_index(1)
+    |> Enum.filter(fn {[left, right], _} -> sorted?(left, right) end)
+    |> Enum.map(fn {_, index} -> index end)
+    |> Enum.sum()
+  end
+
+  @doc """
+  Return the decoder key from the positions of the sorted divider packets.
+
+      iex> input = Kino.FS.file_path("day13.txt") |> File.read!()
+      ...> Advent.decoder_key(input)
+      22344
+  """
+  def decoder_key(input, divider_packets \\ [[[6]], [[2]]]) when is_binary(input) do
+    parse(input)
+    |> Enum.concat(divider_packets)
+    |> Enum.sort(&sorted?/2)
+    |> Enum.with_index(1)
+    |> Enum.filter(fn {packet, _} -> packet in divider_packets end)
+    |> Enum.map(fn {_, index} -> index end)
+    |> Enum.product()
+  end
+
+  defp sorted?([left | tail_left], [right | tail_right]) do
+    case sorted?(left, right) do
+      :continue -> sorted?(tail_left, tail_right)
+      true -> true
+      false -> false
+    end
+  end
+
+  defp sorted?(left, right) when is_list(left) and is_integer(right) do
+    sorted?(left, [right])
+  end
+
+  defp sorted?(left, right) when is_integer(left) and is_list(right) do
+    sorted?([left], right)
+  end
+
+  defp sorted?([], []), do: :continue
+  defp sorted?([], _), do: true
+  defp sorted?(_, []), do: false
+
+  defp sorted?(left, right) when left == right, do: :continue
+  defp sorted?(left, right) when left < right, do: true
+  defp sorted?(left, right) when left > right, do: false
+
+  defp parse(input) when is_binary(input) do
+    input
+    |> String.split("\n\n", trim: true)
+    |> Enum.flat_map(fn pair ->
+      pair
+      |> String.split("\n", trim: true)
+      |> Enum.map(&Jason.decode!/1)
+    end)
+  end
+end
+```
