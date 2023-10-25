@@ -1,0 +1,168 @@
+<!-- livebook:{"file_entries":[{"name":"day14.txt","type":"attachment"}]} -->
+
+# 2022-12-14
+
+```elixir
+Mix.install([:kino], consolidate_protocols: false)
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 14: Regolith Reservoir
+
+      iex> input = \"""
+      ...> 498,4 -> 498,6 -> 496,6
+      ...> 503,4 -> 502,4 -> 502,9 -> 494,9
+      ...> \"""
+      ...> Advent.count_resting_sand(input, :void)
+      24
+      iex> Advent.count_resting_sand(input, :floor)
+      93
+  """
+
+  alias Advent.Cave
+
+  @doc """
+  Count total sand supported by the cave.
+
+      iex> input = Kino.FS.file_path("day14.txt") |> File.read!()
+      ...> Advent.count_resting_sand(input, :void)
+      1298
+      iex> Advent.count_resting_sand(input, :floor)
+      25585
+  """
+  def count_resting_sand(input, mode, source \\ {500, 0})
+      when is_binary(input) and mode in [:void, :floor] do
+    grid = parse_grid(input)
+    cave = Cave.new(grid, mode)
+
+    Stream.repeatedly(fn -> source end)
+    |> Enum.reduce_while(cave, fn {x, y}, previous ->
+      next = Cave.drop_sand({x, y}, previous)
+
+      if next == previous do
+        {:halt, previous}
+      else
+        {:cont, next}
+      end
+    end)
+    |> Cave.count_sand()
+  end
+
+  # TODO
+  def parse_grid(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.flat_map(&parse_path/1)
+    |> Enum.into(%{}, fn {x, y} -> {{x, y}, :rock} end)
+  end
+
+  defp parse_path(path) when is_binary(path) do
+    path
+    |> String.split(" -> ", trim: true)
+    |> Enum.map(fn point ->
+      point
+      |> String.split(",", trim: true)
+      |> Enum.map(&String.to_integer/1)
+      |> List.to_tuple()
+    end)
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.flat_map(fn [{from_x, from_y}, {to_x, to_y}] ->
+      for x <- from_x..to_x, y <- from_y..to_y, do: {x, y}
+    end)
+  end
+
+  defmodule Cave do
+    defstruct grid: %{}, mode: :void, bottom: 0
+
+    def new(grid, mode) when is_map(grid) and mode in [:void, :floor] do
+      y_max =
+        grid
+        |> Enum.map(fn {{_, y}, _} -> y end)
+        |> Enum.max()
+
+      %Cave{grid: grid, mode: mode, bottom: y_max}
+    end
+
+    def drop_sand({x, y}, cave) do
+      cond do
+        cave.mode == :void and cave.bottom < y -> cave
+        cave.mode == :floor and cave.bottom + 1 == y -> place_sand({x, y}, cave)
+        cave.grid[{x, y + 1}] == nil -> drop_sand({x, y + 1}, cave)
+        cave.grid[{x - 1, y + 1}] == nil -> drop_sand({x - 1, y + 1}, cave)
+        cave.grid[{x + 1, y + 1}] == nil -> drop_sand({x + 1, y + 1}, cave)
+        true -> place_sand({x, y}, cave)
+      end
+    end
+
+    def count_sand(cave) do
+      cave.grid
+      |> Enum.count(fn {_, value} -> value == :sand end)
+    end
+
+    defp place_sand({x, y}, cave) do
+      update_in(cave.grid, &Map.put(&1, {x, y}, :sand))
+    end
+  end
+
+  defimpl Inspect, for: Cave do
+    def inspect(cave, _) do
+      %{
+        x_min: x_min,
+        x_max: x_max,
+        y_min: y_min,
+        y_max: y_max
+      } = extents(cave)
+
+      width = (x_min - 1)..(x_max + 1)
+      height = (y_min - 1)..(y_max + 1)
+
+      for(y <- height, x <- width, do: {x, y})
+      |> Enum.map(fn {x, y} ->
+        case cave.grid[{x, y}] do
+          :rock -> "#"
+          :sand -> "o"
+          nil when cave.mode == :void and y_max <= y -> "~"
+          nil when cave.mode == :floor and y_max + 1 == y -> "#"
+          nil -> "."
+        end
+      end)
+      |> Enum.chunk_every(Range.size(width))
+      |> Enum.map(&Enum.join/1)
+      |> Enum.join("\n")
+    end
+
+    defp extents(cave) do
+      cave.grid
+      |> Enum.reduce(
+        %{x_min: 500, x_max: 500, y_min: 0, y_max: 0},
+        fn {{x, y}, _}, acc ->
+          %{
+            x_min: min(acc.x_min, x),
+            x_max: max(acc.x_max, x),
+            y_min: min(acc.y_min, y),
+            y_max: max(acc.y_max, y)
+          }
+        end
+      )
+    end
+  end
+end
+```
+
+```elixir
+input = Kino.FS.file_path("day14.txt") |> File.read!()
+
+:eprof.start_profiling([self()])
+
+1..100
+|> Enum.each(fn _ ->
+  Advent.count_resting_sand(input, :void)
+end)
+
+:eprof.stop_profiling()
+:eprof.analyze()
+```
