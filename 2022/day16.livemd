@@ -1,0 +1,118 @@
+<!-- livebook:{"file_entries":[{"name":"day16.txt","type":"attachment"}]} -->
+
+# 2022-12-16
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 16: Proboscidea Volcanium
+
+      iex> input = \"""
+      ...> Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
+      ...> Valve BB has flow rate=13; tunnels lead to valves CC, AA
+      ...> Valve CC has flow rate=2; tunnels lead to valves DD, BB
+      ...> Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
+      ...> Valve EE has flow rate=3; tunnels lead to valves FF, DD
+      ...> Valve FF has flow rate=0; tunnels lead to valves EE, GG
+      ...> Valve GG has flow rate=0; tunnels lead to valves FF, HH
+      ...> Valve HH has flow rate=22; tunnel leads to valve GG
+      ...> Valve II has flow rate=0; tunnels lead to valves AA, JJ
+      ...> Valve JJ has flow rate=21; tunnel leads to valve II
+      ...> \"""
+      ...> Advent.max_releasable_pressure(input)
+      1651
+  """
+
+  @pattern ~r/Valve (\w+) has flow rate=(\d+); (?:tunnels lead to valves|tunnel leads to valve) (.*)/
+
+  @doc """
+  Return the maximum pressure that can be released in the time limit.
+
+      tex> input = Kino.FS.file_path("day16.txt") |> File.read!()
+      ...> Advent.max_releasable_pressure(input, "AA", 1)
+      0
+  """
+  def max_releasable_pressure(input, start \\ "AA", minutes \\ 30) when is_binary(input) do
+    graph =
+      input
+      |> parse()
+      |> build_graph()
+
+    graph
+    |> :digraph.vertices()
+    |> Enum.filter(fn valve ->
+      {_, pressure} = :digraph.vertex(graph, valve)
+      0 < pressure
+    end)
+    |> permutations()
+    |> Enum.map(&calculate_pressure(graph, &1, start, 0, minutes))
+    |> Enum.max()
+  end
+
+  defp calculate_pressure(_graph, [], _current, released, _minutes), do: released
+  defp calculate_pressure(_graph, _to_open, _current, released, 0), do: released
+
+  defp calculate_pressure(graph, to_open, current, released, minutes) do
+    [next | rest] = to_open
+    path = :digraph.get_short_path(graph, current, next)
+
+    minutes = minutes - length(path)
+
+    if minutes < 0 do
+      released
+    else
+      {_, pressure} = :digraph.vertex(graph, next)
+      released = released + pressure * minutes
+      calculate_pressure(graph, rest, next, released, minutes)
+    end
+  end
+
+  def permutations([]) do
+    [[]]
+  end
+
+  def permutations(list) do
+    for elem <- list,
+        rest <- permutations(list -- [elem]) do
+      [elem | rest]
+    end
+  end
+
+  defp build_graph(lines) do
+    graph = :digraph.new()
+
+    for {valve, pressure, _} <- lines do
+      :digraph.add_vertex(graph, valve, pressure)
+    end
+
+    for {from, _, connections} <- lines,
+        to <- connections do
+      :digraph.add_edge(graph, from, to, "#{from} -> #{to}")
+    end
+
+    graph
+  end
+
+  defp parse(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&Regex.run(@pattern, &1, capture: :all_but_first))
+    |> Enum.map(fn [valve, pressure, connections] ->
+      pressure = String.to_integer(pressure)
+      connections = String.split(connections, ", ")
+      {valve, pressure, connections}
+    end)
+  end
+end
+
+1..15
+|> Enum.to_list()
+|> Advent.permutations()
+|> length()
+```
