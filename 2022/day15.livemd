@@ -1,0 +1,158 @@
+<!-- livebook:{"file_entries":[{"name":"day15.txt","type":"attachment"}]} -->
+
+# 2022-12-15
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 15: Beacon Exclusion Zone
+
+      iex> input = \"""
+      ...> Sensor at x=2, y=18: closest beacon is at x=-2, y=15
+      ...> Sensor at x=9, y=16: closest beacon is at x=10, y=16
+      ...> Sensor at x=13, y=2: closest beacon is at x=15, y=3
+      ...> Sensor at x=12, y=14: closest beacon is at x=10, y=16
+      ...> Sensor at x=10, y=20: closest beacon is at x=10, y=16
+      ...> Sensor at x=14, y=17: closest beacon is at x=10, y=16
+      ...> Sensor at x=8, y=7: closest beacon is at x=2, y=10
+      ...> Sensor at x=2, y=0: closest beacon is at x=2, y=10
+      ...> Sensor at x=0, y=11: closest beacon is at x=2, y=10
+      ...> Sensor at x=20, y=14: closest beacon is at x=25, y=17
+      ...> Sensor at x=17, y=20: closest beacon is at x=21, y=22
+      ...> Sensor at x=16, y=7: closest beacon is at x=15, y=3
+      ...> Sensor at x=14, y=3: closest beacon is at x=15, y=3
+      ...> Sensor at x=20, y=1: closest beacon is at x=15, y=3
+      ...> \"""
+      ...> Advent.beacon_exclusion_zone(input, 10)
+      26
+      iex> Advent.find_tuning_frequency(input, 0..20, 0..20)
+      56000011
+  """
+
+  @doc """
+  Count the cells excluded by the sensor readings.
+
+      iex> input = Kino.FS.file_path("day15.txt") |> File.read!()
+      ...> Advent.beacon_exclusion_zone(input, 2_000_000)
+      4725496
+  """
+  def beacon_exclusion_zone(input, row) when is_binary(input) and is_integer(row) do
+    positions = parse(input)
+
+    count_known_beacons =
+      positions
+      |> Enum.uniq_by(fn {_, {x, y}} -> {x, y} end)
+      |> Enum.count(fn {_, {_, beacon_y}} -> beacon_y == row end)
+
+    count_excluded =
+      exclusion_ranges(row, positions)
+      |> Enum.map(&Range.size/1)
+      |> Enum.sum()
+
+    # Beacons themselves don't count as an excluded position
+    count_excluded - count_known_beacons
+  end
+
+  @doc """
+  Find the tuning frequency for the distress beacon.
+
+      iex> input = Kino.FS.file_path("day15.txt") |> File.read!()
+      ...> Advent.find_tuning_frequency(input, 0..4_000_000, 0..4_000_000)
+      12051287042458
+  """
+  def find_tuning_frequency(input, range_x, range_y, factor \\ 4_000_000) when is_binary(input) do
+    positions = parse(input)
+
+    # We know there is only one valid position so we can check just
+    # outside the border of all sensor ranges
+    {x, y} =
+      positions
+      |> Enum.flat_map(fn {{x, y} = sensor, beacon} ->
+        distance_apart = separation(sensor, beacon)
+        distance_out_of_range = distance_apart + 1
+
+        0..distance_out_of_range//1
+        |> Enum.flat_map(fn dx ->
+          dy = distance_out_of_range - dx
+
+          [
+            {x + dx, y + dy},
+            {x + dx, y - dy},
+            {x - dx, y + dy},
+            {x - dx, y - dy}
+          ]
+        end)
+        |> Enum.uniq()
+      end)
+      |> Enum.filter(fn {x, y} -> x in range_x and y in range_y end)
+      |> Enum.frequencies()
+      |> Enum.sort_by(fn {_, frequency} -> frequency end, :desc)
+      |> Enum.map(fn {{x, y}, _} -> {x, y} end)
+      |> Enum.find(fn {x, y} -> true end)
+
+    x * factor + y
+  end
+
+  defp exclusion_ranges(row, positions) when is_integer(row) and is_list(positions) do
+    positions
+    |> Enum.map(fn {sensor, beacon} ->
+      {sensor_x, _} = sensor
+
+      distance_apart = separation(sensor, beacon)
+      distance_from_target = distance_apart - separation(sensor, {sensor_x, row})
+
+      (sensor_x - distance_from_target)..(sensor_x + distance_from_target)//1
+    end)
+    |> Enum.filter(fn range -> range.first <= range.last end)
+    |> Enum.sort()
+    |> Enum.reduce(
+      [],
+      fn
+        range, [head | stack] ->
+          if overlaps_or_adjacent?(range, head) do
+            [expand_range(range, head) | stack]
+          else
+            [range | [head | stack]]
+          end
+
+        range, [] ->
+          [range]
+      end
+    )
+    |> Enum.sort()
+  end
+
+  defp overlaps_or_adjacent?(a, b) do
+    a.first <= b.last + 1 and b.first <= a.last + 1
+  end
+
+  defp expand_range(a, b) do
+    min(a.first, b.first)..max(a.last, b.last)//1
+  end
+
+  defp separation({x1, y1}, {x2, y2}) do
+    abs(x1 - x2) + abs(y1 - y2)
+  end
+
+  defp parse(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&parse_line/1)
+  end
+
+  defp parse_line(line) when is_binary(line) do
+    [sensor_x, sensor_y, beacon_x, beacon_y] =
+      ~r/Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+)/
+      |> Regex.run(line, capture: :all_but_first)
+      |> Enum.map(&String.to_integer/1)
+
+    {{sensor_x, sensor_y}, {beacon_x, beacon_y}}
+  end
+end
+```
