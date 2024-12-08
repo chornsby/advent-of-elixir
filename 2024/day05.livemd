@@ -1,0 +1,149 @@
+<!-- livebook:{"file_entries":[{"name":"day05.txt","type":"attachment"}]} -->
+
+# 2024-12-05
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 5: Print Queue
+
+      iex> input = \"""
+      ...> 47|53
+      ...> 97|13
+      ...> 97|61
+      ...> 97|47
+      ...> 75|29
+      ...> 61|13
+      ...> 75|53
+      ...> 29|13
+      ...> 97|29
+      ...> 53|29
+      ...> 61|53
+      ...> 97|53
+      ...> 61|29
+      ...> 47|13
+      ...> 75|47
+      ...> 97|75
+      ...> 47|61
+      ...> 75|61
+      ...> 47|29
+      ...> 75|13
+      ...> 53|13
+      ...> 
+      ...> 75,47,61,53,29
+      ...> 97,61,53,29,13
+      ...> 75,29,13
+      ...> 75,97,47,61,53
+      ...> 61,13,29
+      ...> 97,13,75,29,47
+      ...> \"""
+      ...> Advent.sum_correctly_ordered(input)
+      143
+      iex> Advent.sum_incorrectly_reordered(input)
+      123
+  """
+
+  @doc """
+  Return the sum of the middle page numbers of correctly ordered updates.
+
+      iex> input = Kino.FS.file_path("day05.txt") |> File.read!()
+      ...> Advent.sum_correctly_ordered(input)
+      6260
+  """
+  def sum_correctly_ordered(input) when is_binary(input) do
+    {rules, updates} = parse_rules_and_updates(input)
+
+    updates
+    |> Enum.filter(&correct?(&1, rules))
+    |> Enum.map(&middle/1)
+    |> Enum.sum()
+  end
+
+  @doc """
+  Return the sum of the middle page numbers of incorrect (but reordered) updates.
+
+      iex> input = Kino.FS.file_path("day05.txt") |> File.read!()
+      ...> Advent.sum_incorrectly_reordered(input)
+      5346
+  """
+  def sum_incorrectly_reordered(input) when is_binary(input) do
+    {rules, updates} = parse_rules_and_updates(input)
+
+    updates
+    |> Enum.reject(&correct?(&1, rules))
+    |> Enum.map(&reorder(&1, rules))
+    |> Enum.map(&middle/1)
+    |> Enum.sum()
+  end
+
+  defp correct?(update, rules) when is_list(update) and is_list(rules) do
+    index_by_page =
+      update
+      |> Enum.with_index()
+      |> Enum.into(%{})
+
+    Enum.all?(rules, fn [left, right] ->
+      left_index = Map.get(index_by_page, left)
+      right_index = Map.get(index_by_page, right)
+
+      case {left_index, right_index} do
+        {nil, _} -> true
+        {_, nil} -> true
+        {left_index, right_index} when left_index < right_index -> true
+        _ -> false
+      end
+    end)
+  end
+
+  defp reorder(update, rules) when is_list(update) and is_list(rules) do
+    Enum.sort(update, fn a, b ->
+      Enum.all?(rules, fn [left, right] ->
+        case [a, b] do
+          [^left, ^right] -> true
+          [^right, ^left] -> false
+          _ -> true
+        end
+      end)
+    end)
+  end
+
+  defp middle(update) when is_list(update) do
+    update
+    |> length()
+    |> div(2)
+    |> then(&Enum.at(update, &1))
+  end
+
+  defp parse_rules_and_updates(input) when is_binary(input) do
+    [rules, updates] =
+      input
+      |> String.split("\n\n", trim: true)
+
+    rules =
+      rules
+      |> String.split("\n", trim: true)
+      |> Enum.map(fn rule ->
+        rule
+        |> String.split("|")
+        |> Enum.map(&String.to_integer/1)
+      end)
+
+    updates =
+      updates
+      |> String.split("\n", trim: true)
+      |> Enum.map(fn pages ->
+        pages
+        |> String.split(",")
+        |> Enum.map(&String.to_integer/1)
+      end)
+
+    {rules, updates}
+  end
+end
+```

@@ -1,0 +1,70 @@
+<!-- livebook:{"file_entries":[{"name":"day03.txt","type":"attachment"}]} -->
+
+# 2024-12-03
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 3: Mull It Over
+
+      iex> input = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))"
+      ...> Advent.sum_multiplications(input)
+      161
+
+      iex> input = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
+      ...> Advent.sum_multiplications(input, :conditional)
+      48
+  """
+
+  @doc """
+  Return the total of the uncorrupted multiplication instructions.
+
+      iex> input = Kino.FS.file_path("day03.txt") |> File.read!()
+      ...> Advent.sum_multiplications(input)
+      187833789
+  """
+  def sum_multiplications(input) when is_binary(input) do
+    ~r/mul\((\d{1,3}),(\d{1,3})\)/
+    |> Regex.scan(input, capture: :all_but_first)
+    |> Enum.map(fn numbers ->
+      numbers
+      |> Enum.map(&String.to_integer/1)
+      |> Enum.product()
+    end)
+    |> Enum.sum()
+  end
+
+  @doc """
+  Return the total of the uncorrupted multiplication instructions with conditionals.
+
+      iex> input = Kino.FS.file_path("day03.txt") |> File.read!()
+      ...> Advent.sum_multiplications(input, :conditional)
+      94455185
+  """
+  def sum_multiplications(input, :conditional) when is_binary(input) do
+    ~r/do\(\)|don't\(\)|mul\((\d{1,3}),(\d{1,3})\)/
+    |> Regex.scan(input)
+    |> Enum.flat_map_reduce(true, fn instruction, enabled? ->
+      case instruction do
+        ["do()"] -> {[], true}
+        ["don't()"] -> {[], false}
+        ["mul" <> _, x, y] when enabled? -> {[[x, y]], enabled?}
+        _ -> {[], enabled?}
+      end
+    end)
+    |> then(fn {numbers, _} -> numbers end)
+    |> Enum.map(fn numbers ->
+      numbers
+      |> Enum.map(&String.to_integer/1)
+      |> Enum.product()
+    end)
+    |> Enum.sum()
+  end
+end
+```

@@ -1,0 +1,162 @@
+<!-- livebook:{"file_entries":[{"name":"day06.txt","type":"attachment"}]} -->
+
+# 2024-12-06
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 6: Guard Gallivant
+
+      iex> input = \"""
+      ...> ....#.....
+      ...> .........#
+      ...> ..........
+      ...> ..#.......
+      ...> .......#..
+      ...> ..........
+      ...> .#..^.....
+      ...> ........#.
+      ...> #.........
+      ...> ......#...
+      ...> \"""
+      ...> Advent.count_distinct_positions(input)
+      41
+      iex> Advent.count_loop_obstructions(input)
+      6
+  """
+
+  @batch_size 100
+
+  @up {0, -1}
+  @down {0, 1}
+  @left {-1, 0}
+  @right {1, 0}
+
+  @stopped {0, 0}
+
+  @doc """
+  Count the disitinct positions the guard visits while following their patrol.
+
+      iex> input = Kino.FS.file_path("day06.txt") |> File.read!()
+      ...> Advent.count_distinct_positions(input)
+      5329
+  """
+  def count_distinct_positions(input) when is_binary(input) do
+    {grid, guard} = parse_grid_and_guard(input)
+
+    MapSet.new()
+    |> visit(guard, grid)
+    |> Enum.count()
+  end
+
+  @doc """
+  Count the number of places where a new obstruction would cause a loop in the patrol.
+
+      iex> input = Kino.FS.file_path("day06.txt") |> File.read!()
+      ...> Advent.count_loop_obstructions(input)
+      2162
+  """
+  def count_loop_obstructions(input) when is_binary(input) do
+    {grid, {position, _} = guard} = parse_grid_and_guard(input)
+
+    # It's only worth putting obstacles in positions the guard will visit
+    candidates =
+      MapSet.new()
+      |> visit(guard, grid)
+      |> MapSet.delete(position)
+
+    candidates
+    |> Enum.chunk_every(@batch_size)
+    |> Task.async_stream(
+      fn batch ->
+        Enum.count(batch, fn candidate ->
+          grid = Map.put(grid, candidate, :blocked)
+
+          loop?(grid, guard)
+        end)
+      end,
+      ordered: false
+    )
+    |> Enum.map(fn {:ok, count} -> count end)
+    |> Enum.sum()
+  end
+
+  defp visit(visited, {position, _} = guard, grid) do
+    if Map.has_key?(grid, position) do
+      visited = MapSet.put(visited, position)
+      guard = advance(guard, grid)
+
+      visit(visited, guard, grid)
+    else
+      visited
+    end
+  end
+
+  defp loop?(grid, guard), do: loop?(grid, guard, guard)
+
+  defp loop?(grid, fast, slow) do
+    fast =
+      fast
+      |> advance(grid)
+      |> advance(grid)
+
+    slow = advance(slow, grid)
+
+    # Loop detection using Floyd's algorithm
+    # https://en.wikipedia.org/wiki/Cycle_detection
+    case fast do
+      {_, @stopped} -> false
+      ^slow -> true
+      _ -> loop?(grid, fast, slow)
+    end
+  end
+
+  defp advance({current, direction}, grid) do
+    next = step(current, direction)
+
+    case Map.get(grid, next, :out_of_bounds) do
+      :free -> {next, direction}
+      :blocked -> {current, rotate(direction)}
+      :out_of_bounds -> {next, @stopped}
+    end
+  end
+
+  defp step({x, y}, {dx, dy}), do: {x + dx, y + dy}
+
+  defp rotate(direction)
+  defp rotate(@up), do: @right
+  defp rotate(@right), do: @down
+  defp rotate(@down), do: @left
+  defp rotate(@left), do: @up
+
+  defp parse_grid_and_guard(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.with_index()
+    |> Enum.flat_map_reduce(
+      {{0, 0}, @stopped},
+      fn {row, y}, guard ->
+        row
+        |> String.codepoints()
+        |> Enum.with_index()
+        |> Enum.flat_map_reduce(guard, fn {cell, x}, guard ->
+          case cell do
+            "." -> {[{{x, y}, :free}], guard}
+            "#" -> {[{{x, y}, :blocked}], guard}
+            "^" -> {[{{x, y}, :free}], {{x, y}, @up}}
+          end
+        end)
+      end
+    )
+    |> then(fn {grid, guard} ->
+      {Enum.into(grid, %{}), guard}
+    end)
+  end
+end
+```

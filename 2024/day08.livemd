@@ -1,0 +1,143 @@
+<!-- livebook:{"file_entries":[{"name":"day08.txt","type":"attachment"}]} -->
+
+# 2024-12-08
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 8: Resonant Collinearity
+
+      iex> input = \"""
+      ...> ..........
+      ...> ..........
+      ...> ..........
+      ...> ....a.....
+      ...> ........a.
+      ...> .....a....
+      ...> ..........
+      ...> ......A...
+      ...> ..........
+      ...> ..........
+      ...> \"""
+      ...> Advent.count_antinodes(input, :simple)
+      4
+
+      iex> input = \"""
+      ...> T.........
+      ...> ...T......
+      ...> .T........
+      ...> ..........
+      ...> ..........
+      ...> ..........
+      ...> ..........
+      ...> ..........
+      ...> ..........
+      ...> ..........
+      ...> \"""
+      ...> Advent.count_antinodes(input, :harmonics)
+      9
+
+      iex> input = \"""
+      ...> ............
+      ...> ........0...
+      ...> .....0......
+      ...> .......0....
+      ...> ....0.......
+      ...> ......A.....
+      ...> ............
+      ...> ............
+      ...> ........A...
+      ...> .........A..
+      ...> ............
+      ...> ............
+      ...> \"""
+      ...> Advent.count_antinodes(input, :simple)
+      14
+      iex> Advent.count_antinodes(input, :harmonics)
+      34
+  """
+
+  @doc """
+  Count the number of antinodes from same-frequency antennae.
+
+      iex> input = Kino.FS.file_path("day08.txt") |> File.read!()
+      ...> Advent.count_antinodes(input, :simple)
+      348
+      iex> Advent.count_antinodes(input, :harmonics)
+      1221
+  """
+  def count_antinodes(input, type) when is_binary(input) do
+    {antennae, bounds} = parse_antennae_and_bounds(input)
+
+    antennae
+    |> Enum.group_by(
+      fn {_, frequency} -> frequency end,
+      fn {coords, _} -> coords end
+    )
+    |> Enum.flat_map(fn {_, coords} ->
+      for from <- coords, to <- coords, from != to do
+        from
+        |> antinodes(to, type)
+        |> Enum.take_while(&in_bounds?(&1, bounds))
+      end
+      |> List.flatten()
+    end)
+    |> Enum.uniq()
+    |> Enum.count()
+  end
+
+  defp antinodes(from, to, :simple) do
+    from
+    |> antinodes(to, :harmonics)
+    |> Stream.drop_while(fn antinode -> antinode == to end)
+    |> Stream.take(1)
+  end
+
+  defp antinodes(from, to, :harmonics) do
+    direction = offset(from, to)
+
+    Stream.unfold(to, fn coords -> {coords, step(coords, direction)} end)
+  end
+
+  defp in_bounds?({x, y}, {max_x, max_y}) do
+    0 <= x and x <= max_x and 0 <= y and y <= max_y
+  end
+
+  defp offset({from_x, from_y}, {to_x, to_y}) do
+    {to_x - from_x, to_y - from_y}
+  end
+
+  defp step({x, y}, {dx, dy}) do
+    {x + dx, y + dy}
+  end
+
+  defp parse_antennae_and_bounds(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {row, y} ->
+      row
+      |> String.codepoints()
+      |> Enum.with_index(fn cell, x -> {{x, y}, cell} end)
+    end)
+    |> Enum.reduce({%{}, {0, 0}}, fn {{x, y}, cell}, {antennae, {max_x, max_y}} ->
+      antennae =
+        case cell do
+          "." -> antennae
+          _ -> Map.put(antennae, {x, y}, cell)
+        end
+
+      max_x = max(x, max_x)
+      max_y = max(y, max_y)
+
+      {antennae, {max_x, max_y}}
+    end)
+  end
+end
+```

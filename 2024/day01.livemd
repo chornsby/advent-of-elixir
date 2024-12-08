@@ -1,0 +1,76 @@
+<!-- livebook:{"file_entries":[{"name":"day01.txt","type":"attachment"}]} -->
+
+# 2024-12-01
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 1: Historian Hysteria
+
+      iex> input = \"""
+      ...> 3   4
+      ...> 4   3
+      ...> 2   5
+      ...> 1   3
+      ...> 3   9
+      ...> 3   3
+      ...> \"""
+      ...> Advent.sum_total_distance(input)
+      11
+      iex> Advent.sum_similarity_scores(input)
+      31
+  """
+
+  @doc """
+  Return the sum of the differences between the location ids.
+
+      iex> input = Kino.FS.file_path("day01.txt") |> File.read!()
+      ...> Advent.sum_total_distance(input)
+      2756096
+  """
+  def sum_total_distance(input) when is_binary(input) do
+    [left, right] = parse_lists(input)
+    left = Enum.sort(left)
+    right = Enum.sort(right)
+
+    Enum.zip(left, right)
+    |> Enum.map(fn {x, y} -> abs(x - y) end)
+    |> Enum.sum()
+  end
+
+  @doc """
+  Return the sum of the similarity scores for the location ids.
+
+      iex> input = Kino.FS.file_path("day01.txt") |> File.read!()
+      ...> Advent.sum_similarity_scores(input)
+      23117829
+  """
+  def sum_similarity_scores(input) when is_binary(input) do
+    [left, right] = parse_lists(input)
+
+    frequencies = Enum.frequencies(right)
+
+    left
+    |> Enum.map(fn x -> x * Map.get(frequencies, x, 0) end)
+    |> Enum.sum()
+  end
+
+  defp parse_lists(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn line ->
+      line
+      |> String.split()
+      |> Enum.map(&String.to_integer/1)
+    end)
+    |> Enum.zip()
+    |> Enum.map(&Tuple.to_list/1)
+  end
+end
+```

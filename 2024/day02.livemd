@@ -1,0 +1,91 @@
+<!-- livebook:{"file_entries":[{"name":"day02.txt","type":"attachment"}]} -->
+
+# 2024-12-02
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 2: Red-Nosed Reports
+
+      iex> input = \"""
+      ...> 7 6 4 2 1
+      ...> 1 2 7 8 9
+      ...> 9 7 6 2 1
+      ...> 1 3 2 4 5
+      ...> 8 6 4 4 1
+      ...> 1 3 6 7 9
+      ...> \"""
+      ...> Advent.count_safe(input)
+      2
+      iex> Advent.count_safe(input, :dampener)
+      4
+  """
+
+  @doc """
+  Return the number of reports that are considered safe.
+
+      iex> input = Kino.FS.file_path("day02.txt") |> File.read!()
+      ...> Advent.count_safe(input)
+      359
+      iex> Advent.count_safe(input, :dampener)
+      418
+  """
+  def count_safe(input) when is_binary(input) do
+    input
+    |> parse_reports()
+    |> Enum.count(&safe?/1)
+  end
+
+  def count_safe(input, :dampener) when is_binary(input) do
+    input
+    |> parse_reports()
+    |> Enum.count(&safe?(&1, :dampener))
+  end
+
+  defp safe?(report) when is_list(report) do
+    all_increasing?(report) or all_decreasing?(report)
+  end
+
+  defp safe?(report, :dampener) when is_list(report) do
+    if safe?(report) do
+      true
+    else
+      0..length(report)
+      |> Enum.map(&List.delete_at(report, &1))
+      |> Enum.any?(&safe?/1)
+    end
+  end
+
+  defp all_increasing?(report) when is_list(report) do
+    report
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.all?(&safe_increase?/1)
+  end
+
+  defp all_decreasing?(report) when is_list(report) do
+    report
+    |> Enum.reverse()
+    |> all_increasing?()
+  end
+
+  defp safe_increase?([x, y]) when is_integer(x) and is_integer(y) do
+    x + 1 <= y and y <= x + 3
+  end
+
+  defp parse_reports(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn report ->
+      report
+      |> String.split()
+      |> Enum.map(&String.to_integer/1)
+    end)
+  end
+end
+```

@@ -1,0 +1,89 @@
+<!-- livebook:{"file_entries":[{"name":"day07.txt","type":"attachment"}]} -->
+
+# 2024-12-07
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 7: Bridge Repair
+
+      iex> input = \"""
+      ...> 190: 10 19
+      ...> 3267: 81 40 27
+      ...> 83: 17 5
+      ...> 156: 15 6
+      ...> 7290: 6 8 6 15
+      ...> 161011: 16 10 13
+      ...> 192: 17 8 14
+      ...> 21037: 9 7 18 13
+      ...> 292: 11 6 16 20
+      ...> \"""
+      ...> Advent.total_calibration(input, Advent.basic())
+      3749
+      iex> Advent.total_calibration(input, Advent.extended())
+      11387
+  """
+
+  def basic(), do: [&Kernel.*/2, &Kernel.+/2]
+  def extended(), do: basic() ++ [&concat/2]
+
+  @doc """
+  Sum the calibration targets that can be satisfied with + and * operators.
+
+      iex> input = Kino.FS.file_path("day07.txt") |> File.read!()
+      ...> Advent.total_calibration(input, Advent.basic())
+      6083020304036
+      iex> Advent.total_calibration(input, Advent.extended())
+      59002246504791
+  """
+  def total_calibration(input, operators) when is_binary(input) do
+    input
+    |> parse_tests()
+    |> Task.async_stream(
+      fn {numbers, target} ->
+        if satisfiable?(numbers, target, operators) do
+          [target]
+        else
+          []
+        end
+      end,
+      ordered: false
+    )
+    |> Enum.flat_map(fn {:ok, result} -> result end)
+    |> Enum.sum()
+  end
+
+  defp satisfiable?(numbers, target, operators)
+  defp satisfiable?([current | _], target, _) when current > target, do: false
+  defp satisfiable?([current], target, _), do: current == target
+
+  defp satisfiable?([current | [next | rest]], target, operators) do
+    Enum.any?(operators, fn operator ->
+      satisfiable?([operator.(current, next) | rest], target, operators)
+    end)
+  end
+
+  defp concat(a, b) when is_number(a) and is_number(b) do
+    digits = (b |> :math.log10() |> floor()) + 1
+
+    a * 10 ** digits + b
+  end
+
+  defp parse_tests(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn line ->
+      line
+      |> String.split([":", " "], trim: true)
+      |> Enum.map(&String.to_integer/1)
+      |> then(fn [target | numbers] -> {numbers, target} end)
+    end)
+  end
+end
+```

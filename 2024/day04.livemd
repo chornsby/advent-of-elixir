@@ -1,0 +1,111 @@
+<!-- livebook:{"file_entries":[{"name":"day04.txt","type":"attachment"}]} -->
+
+# 2024-12-04
+
+```elixir
+Mix.install([:kino])
+```
+
+## Solution
+
+```elixir
+defmodule Advent do
+  @moduledoc """
+  Day 4: Ceres Search
+
+      iex> input = \"""
+      ...> ..X...
+      ...> .SAMX.
+      ...> .A..A.
+      ...> XMAS.S
+      ...> .X....
+      ...> \"""
+      ...> Advent.count_xmas(input)
+      4
+
+      iex> input = \"""
+      ...> MMMSXXMASM
+      ...> MSAMXMSMSA
+      ...> AMXSXMAAMM
+      ...> MSAMASMSMX
+      ...> XMASAMXAMM
+      ...> XXAMMXXAMA
+      ...> SMSMSASXSS
+      ...> SAXAMASAAA
+      ...> MAMMMXMMMM
+      ...> MXMXAXMASX
+      ...> \"""
+      ...> Advent.count_xmas(input)
+      18
+      iex> Advent.count_x_mas(input)
+      9
+  """
+
+  @doc """
+  Count the number of times XMAS appears in the word search.
+
+      iex> input = Kino.FS.file_path("day04.txt") |> File.read!()
+      ...> Advent.count_xmas(input)
+      2685
+  """
+  def count_xmas(input) when is_binary(input) do
+    grid = parse_grid(input)
+
+    grid
+    |> Enum.filter(fn {_, cell} -> cell == "X" end)
+    |> Enum.map(fn {{x, y}, "X"} ->
+      [
+        [{x, y}, {x + 1, y}, {x + 2, y}, {x + 3, y}],
+        [{x, y}, {x - 1, y}, {x - 2, y}, {x - 3, y}],
+        [{x, y}, {x, y + 1}, {x, y + 2}, {x, y + 3}],
+        [{x, y}, {x, y - 1}, {x, y - 2}, {x, y - 3}],
+        [{x, y}, {x + 1, y + 1}, {x + 2, y + 2}, {x + 3, y + 3}],
+        [{x, y}, {x + 1, y - 1}, {x + 2, y - 2}, {x + 3, y - 3}],
+        [{x, y}, {x - 1, y + 1}, {x - 2, y + 2}, {x - 3, y + 3}],
+        [{x, y}, {x - 1, y - 1}, {x - 2, y - 2}, {x - 3, y - 3}]
+      ]
+      |> Enum.count(fn coords ->
+        ["X", "M", "A", "S"] == Enum.map(coords, &Map.get(grid, &1))
+      end)
+    end)
+    |> Enum.sum()
+  end
+
+  @doc """
+  Count the number of times MAS appears in a cross in the word search.
+
+      iex> input = Kino.FS.file_path("day04.txt") |> File.read!()
+      ...> Advent.count_x_mas(input)
+      2048
+  """
+  def count_x_mas(input) when is_binary(input) do
+    grid = parse_grid(input)
+
+    grid
+    |> Enum.filter(fn {_, cell} -> cell == "A" end)
+    |> Enum.map(fn {{x, y}, "A"} ->
+      [
+        [{x - 1, y - 1}, {x, y}, {x + 1, y + 1}, {x - 1, y + 1}, {x, y}, {x + 1, y - 1}],
+        [{x - 1, y - 1}, {x, y}, {x + 1, y + 1}, {x + 1, y - 1}, {x, y}, {x - 1, y + 1}],
+        [{x + 1, y + 1}, {x, y}, {x - 1, y - 1}, {x - 1, y + 1}, {x, y}, {x + 1, y - 1}],
+        [{x + 1, y + 1}, {x, y}, {x - 1, y - 1}, {x + 1, y - 1}, {x, y}, {x - 1, y + 1}]
+      ]
+      |> Enum.count(fn coords ->
+        ["M", "A", "S", "M", "A", "S"] == Enum.map(coords, &Map.get(grid, &1))
+      end)
+    end)
+    |> Enum.sum()
+  end
+
+  defp parse_grid(input) when is_binary(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.codepoints/1)
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {row, y} ->
+      Enum.with_index(row, fn cell, x -> {{x, y}, cell} end)
+    end)
+    |> Enum.into(%{})
+  end
+end
+```
